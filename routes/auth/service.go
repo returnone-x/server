@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"returnone/database/user"
 	"returnone/utils/crypto"
-	SendError "returnone/utils/sendError"
+	"returnone/utils/sendError"
 
 	"github.com/gofiber/fiber/v2"
 )
