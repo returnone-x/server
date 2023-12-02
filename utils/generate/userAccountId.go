@@ -1,4 +1,4 @@
-package Generate
+package generate
 
 import (
 	"fmt"

@@ -1,9 +1,9 @@
-package DatabaseUser
+package databaseUser
 
 import (
 	"returnone/config"
 	"returnone/models/user"
-	Generate "returnone/utils/generate"
+	"returnone/utils/generate"
 	"time"
 )
 
@@ -12,11 +12,6 @@ func CreateUser(
 	hash_password string,
 	user_name string,
 ) userModles.UserAccount {
-	db := config.Connect()
-
-	defer db.Close()
-
-	
 	now_time := time.Now()
 	sqlString := `
 	INSERT INTO users 
@@ -25,9 +20,9 @@ func CreateUser(
 	($1, $2, $3, $4, $5, $6)
 	`
 
-	user_id := Generate.GenerateUserAccountId()
+	user_id := generate.GenerateUserAccountId()
 
-	db.Exec(
+	db.DB.Exec(
 		sqlString,
 		user_id, email,
 		hash_password,

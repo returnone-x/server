@@ -1,4 +1,4 @@
-package config
+package db
 
 import (
 	"database/sql"
@@ -6,13 +6,13 @@ import (
 	"log"
 	"os"
 	_ "github.com/lib/pq"
-	"github.com/joho/godotenv"
 )
 
-func Connect() *sql.DB {
+var DB *sql.DB
+
+func Connect() {
 	// ** DATABASE SETTINGS & CONNECT**
 	//load environment variables
-	godotenv.Load()
 	psql_host := os.Getenv("POSTGRE_HOST")
 	psql_user := os.Getenv("POSTGRE_USER")
 	psql_password := os.Getenv("POSTGRE_PASSWORD")
@@ -23,6 +23,8 @@ func Connect() *sql.DB {
 	connection := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Taipei", psql_host, psql_user, psql_password, psql_dbname, psql_port)
 
 	db, err := sql.Open("postgres", connection)
+	
+	DB = db
 
 	if err != nil {
 		log.Fatal(err)
@@ -32,5 +34,5 @@ func Connect() *sql.DB {
 		log.Fatal(err)
 	}
 
-	return db
+	fmt.Println("Successful connect to database")
 }

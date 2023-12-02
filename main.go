@@ -1,12 +1,24 @@
 package main
 
 import (
+	"os"
+	"returnone/config"
 	"returnone/routes/auth"
+	"time"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/encryptcookie"
+	"github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/utils"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+
+	godotenv.Load()
+
+	db.Connect()
+	
 	app := fiber.New()
 
 	// Set logger
@@ -16,6 +28,24 @@ func main() {
 		TimeZone:   "local",
 	}))
 
+	// encrypt cookie
+	app.Use(encryptcookie.New(encryptcookie.Config{
+		Key: os.Getenv("ENCRYPT_COOKIE_SECRET"),
+	}))
+	
+	// protection Cross-Site Request Forgery (CSRF) attacks
+	app.Use(csrf.New(csrf.Config{
+		KeyLookup:      "header:X-Csrf-Token",
+		CookieName:     "csrf_",
+		CookieSameSite: "Strict",
+		Expiration:     1 * time.Hour,
+		KeyGenerator:   utils.UUID,
+	}))
+	
+	//handle 404 error
+	app.Use(func(c *fiber.Ctx) error {
+		return c.Status(404).SendString("Page not found.")
+	})
 	api_v1 := app.Group("/v1")
 
 	// set auth controller

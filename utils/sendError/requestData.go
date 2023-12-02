@@ -1,4 +1,4 @@
-package SendError
+package sendError
 
 import ()
 
