@@ -38,14 +38,10 @@ func main() {
 		KeyLookup:      "header:X-Csrf-Token",
 		CookieName:     "csrf_",
 		CookieSameSite: "Strict",
-		Expiration:     1 * time.Hour,
+		Expiration:     72 * time.Hour,
 		KeyGenerator:   utils.UUID,
 	}))
 	
-	//handle 404 error
-	app.Use(func(c *fiber.Ctx) error {
-		return c.Status(404).SendString("Page not found.")
-	})
 	api_v1 := app.Group("/v1")
 
 	// set auth controller

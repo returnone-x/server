@@ -13,7 +13,6 @@ import (
 
 func SignUp(c *fiber.Ctx) error {
 	var data map[string]string
-
 	// get data from body
 	err := c.BodyParser(&data)
 
