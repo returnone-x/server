@@ -1,12 +1,13 @@
 package auth
 
 import (
+	"fmt"
 	"log"
 	"returnone/database/user"
 	utils "returnone/utils"
 	"time"
-
 	"github.com/gofiber/fiber/v2"
+	"github.com/pquerna/otp/totp"
 )
 
 func SignUp(c *fiber.Ctx) error {
@@ -148,6 +149,21 @@ func LogIn(c *fiber.Ctx) error {
 		return c.Status(500).JSON(utils.ErrorMessage("Error generating access token", access_token_err))
 	}
 
+	if user_data.Default_2fa == 3 {
+		if data["otp"] == ""{
+			return c.Status(403).JSON(utils.ErrorMessage("OTP is required", nil))
+		}
+		fmt.Println(user_data.Totp)
+
+		valid := totp.Validate(data["otp"], user_data.Totp)
+	
+		fmt.Println("current one-time password is:", user_data.Totp)
+	
+		fmt.Println("verify OTP success:", valid)
+		if !valid {
+			return c.Status(403).JSON(utils.ErrorMessage("OTP is not valid", nil))
+		}
+	}
 	//set cookies
 	access_token_cookie := fiber.Cookie{
 		Name:    "accessToken",

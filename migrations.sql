@@ -1,6 +1,6 @@
 CREATE TABLE users
 (
- "id"             varchar(50) NOT NULL,
+ "id"           varchar(50) NOT NULL,
  email          varchar(100) NOT NULL,
  phone          varchar(50) NULL,
  phone_country  varchar(50) NULL,
@@ -16,7 +16,7 @@ CREATE TABLE users
  phone_2fa      boolean NOT NULL,
  totp_2fa       boolean NOT NULL,
  totp           char(255) NULL,
- default_2fa    interval NOT NULL,
+ default_2fa    integer NOT NULL,
  create_at      timestamp NOT NULL,
  update_at      timestamp NOT NULL,
  CONSTRAINT PK_1 PRIMARY KEY ( "id" )
