@@ -8,11 +8,11 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"returnone/config"
 	"returnone/database/user"
 	utils "returnone/utils"
 	"time"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/pquerna/otp/totp"
 )
@@ -188,7 +188,7 @@ func LogIn(c *fiber.Ctx) error {
 }
 
 func GoogleLogin(c *fiber.Ctx) error {
-	url := config.AppConfig.GoogleLoginConfig.AuthCodeURL("randomstate")
+	url := config.AppConfig.GoogleLoginConfig.AuthCodeURL(os.Getenv("GOOGLE_SERVER_SECRET"))
 
 	c.Status(fiber.StatusSeeOther)
 	c.Redirect(url)
@@ -197,8 +197,9 @@ func GoogleLogin(c *fiber.Ctx) error {
 
 func GoogleCallBack(c *fiber.Ctx) error {
 	state := c.Query("state")
-	if state != "randomstate" {
-		return c.SendString("States don't Match!!")
+	//check the states
+	if state != os.Getenv("GOOGLE_SERVER_SECRET") {
+		return c.Status(500).JSON(utils.ErrorMessage("States don't match", nil))
 	}
 
 	code := c.Query("code")
@@ -207,7 +208,7 @@ func GoogleCallBack(c *fiber.Ctx) error {
 
 	token, err := googlecon.Exchange(context.Background(), code)
 	if err != nil {
-		return c.SendString("Code-Token Exchange Failed")
+		return c.Status(500).JSON(utils.ErrorMessage("Code-Token Exchange Failed", err))
 	}
 
 	resp, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
