@@ -10,6 +10,12 @@ import (
 	"github.com/pquerna/otp/totp"
 )
 
+
+//24 hours later time(for access token)
+var twenty_four_hours_later = time.Now().Add(time.Hour * 24)
+//60 days later time(for refresh tokne)
+var sixty_days_later = time.Now().Add(time.Hour * 24 * 60)
+
 func SignUp(c *fiber.Ctx) error {
 	var data map[string]string
 	// get data from body
@@ -55,10 +61,6 @@ func SignUp(c *fiber.Ctx) error {
 		log.Println("| Path:", c.Path(), "| Data:", data, "| Message:", save_data_err)
 		return c.Status(500).JSON(utils.ErrorMessage("Error creating user", save_data_err))
 	}
-	//24 hours later time(for access token)
-	twenty_four_hours_later := time.Now().Add(time.Hour * 24)
-	//60 days later time(for refresh tokne)
-	sixty_days_later := time.Now().Add(time.Hour * 24 * 60)
 
 	//generate Jwt token
 	access_token, access_token_err := utils.GenerateJwtToken(save_data.Id, "accessToken", twenty_four_hours_later.Unix())
@@ -129,11 +131,6 @@ func LogIn(c *fiber.Ctx) error {
 	if !check_password {
 		return c.Status(401).JSON(utils.RequestValueValid("password or email"))
 	}
-
-	//24 hours later time(for access token)
-	twenty_four_hours_later := time.Now().Add(time.Hour * 24)
-	//60 days later time(for refresh tokne)
-	sixty_days_later := time.Now().Add(time.Hour * 24 * 60)
 
 	//generate Jwt token
 	access_token, access_token_err := utils.GenerateJwtToken(user_data.Id, "accessToken", twenty_four_hours_later.Unix())
