@@ -1,12 +1,9 @@
 package auth
 
 import (
-	"fmt"
 	"log"
 	"returnone/database/user"
-	"returnone/utils/crypto"
-	"returnone/utils/sendError"
-	"returnone/utils/valid"
+	utils "returnone/utils"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -26,88 +23,54 @@ func SignUp(c *fiber.Ctx) error {
 	}
 
 	// check if data is valid return error
-	request_data_error := sendError.RequestDataError(data, []string{"email", "password", "user_name"})
-	if request_data_error != "" {
-		return c.Status(400).JSON(
-			fiber.Map{
-				"success": false,
-				"message": fmt.Sprintf("%v is required", request_data_error),
-			})
+	request_data_error := utils.RequestDataRequired(data, []string{"email", "password", "user_name"})
+	if request_data_error != nil {
+		return c.Status(400).JSON(request_data_error)
 	}
 
-	if !valid.IsValidUsername(data["user_name"]) {
-		return c.Status(400).JSON(fiber.Map{
-			"success": false,
-			"message": "This user name is not valid",
-		})
+	if !utils.IsValidUsername(data["user_name"]) {
+		return c.Status(400).JSON(utils.RequestValueValid("user name"))
 	}
 
-	if !valid.IsValidEmail(data["email"]) {
-		return c.Status(400).JSON(fiber.Map{
-			"success": false,
-			"message": "This email address is not valid",
-		})
+	if !utils.IsValidEmail(data["email"]) {
+		return c.Status(400).JSON(utils.RequestValueValid("email address"))
 	}
 
 	// check the email has already been used
-	if databaseUser.CheckUserEmailExist(data["email"]) != 0 {
-		return c.Status(400).JSON(
-			fiber.Map{
-				"success": false,
-				"message": "This email is already in use",
-			})
+	if userDatabase.CheckUserEmailExist(data["email"]) != 0 {
+		return c.Status(400).JSON(utils.RequestValueInUse("email address"))
 	}
 
 	// check the user name has already been used
-	if databaseUser.CheckUserNameExist(data["user_name"]) != 0 {
-		return c.Status(400).JSON(
-			fiber.Map{
-				"success": false,
-				"message": "This user name is already in use",
-			})
+	if userDatabase.CheckUserNameExist(data["user_name"]) != 0 {
+		return c.Status(400).JSON(utils.RequestValueInUse("user name"))
 	}
 
-	hash_password, _ := crypto.HashPassword(data["password"])
+	hash_password, _ := utils.HashPassword(data["password"])
 
-	save_data, save_data_err := databaseUser.CreateUser(data["email"], hash_password, data["user_name"])
+	save_data, save_data_err := userDatabase.CreateUser(data["email"], hash_password, data["user_name"])
 
 	if save_data_err != nil {
 		log.Println("| Path:", c.Path(), "| Data:", data, "| Message:", save_data_err)
-		c.Status(fiber.StatusInternalServerError)
-		return c.Status(500).JSON(fiber.Map{
-			"success": false,
-			"message": "Could not create this user when inserting into database",
-			"error":   save_data_err,
-		})
+		return c.Status(500).JSON(utils.ErrorMessage("Error creating user", save_data_err))
 	}
-
 	//24 hours later time(for access token)
 	twenty_four_hours_later := time.Now().Add(time.Hour * 24)
 	//60 days later time(for refresh tokne)
 	sixty_days_later := time.Now().Add(time.Hour * 24 * 60)
 
 	//generate Jwt token
-	access_token, access_token_err := crypto.GenerateJwtToken(save_data.Id, "accessToken", twenty_four_hours_later.Unix())
-	refresh_token, refresh_token_err := crypto.GenerateJwtToken(save_data.Id, "refreshToken", sixty_days_later.Unix())
+	access_token, access_token_err := utils.GenerateJwtToken(save_data.Id, "accessToken", twenty_four_hours_later.Unix())
+	refresh_token, refresh_token_err := utils.GenerateJwtToken(save_data.Id, "refreshToken", sixty_days_later.Unix())
 
 	//handle errors
 	if refresh_token_err != nil {
 		log.Println("| Path:", c.Path(), "| Data:", data, "| Message:", refresh_token_err)
-		c.Status(fiber.StatusInternalServerError)
-		return c.Status(500).JSON(fiber.Map{
-			"success": false,
-			"message": "Cloud not login when generating refresh token",
-			"error":   access_token_err,
-		})
+		return c.Status(500).JSON(utils.ErrorMessage("Error generating refresh token", refresh_token_err))
 	}
 	if access_token_err != nil {
 		log.Println("| Path:", c.Path(), "| Data:", data, "| Message:", access_token_err)
-		c.Status(fiber.StatusInternalServerError)
-		return c.Status(500).JSON(fiber.Map{
-			"success": false,
-			"message": "Cloud not login when generating access token",
-			"error":   access_token_err,
-		})
+		return c.Status(500).JSON(utils.ErrorMessage("Error generating access token", access_token_err))
 	}
 
 	//set cookies
@@ -138,51 +101,32 @@ func LogIn(c *fiber.Ctx) error {
 	err := c.BodyParser(&data)
 
 	if err != nil {
-		return c.Status(400).JSON(
-			fiber.Map{
-				"success": false,
-				"message": "Invalid post request",
-			})
+		return c.Status(400).JSON(utils.InvalidRequest())
 	}
 
-	if !valid.IsValidEmail(data["email"]) {
-		return c.Status(400).JSON(fiber.Map{
-			"success": false,
-			"message": "This email address is not valid",
-		})
+	if !utils.IsValidEmail(data["email"]) {
+		return c.Status(400).JSON(utils.RequestValueValid("email address"))
 	}
-
 	// check if data is valid return error
-	request_data_error := sendError.RequestDataError(data, []string{"email", "password"})
-	if request_data_error != "" {
-		return c.Status(400).JSON(
-			fiber.Map{
-				"success": false,
-				"message": fmt.Sprintf("%v is required", request_data_error),
-			})
+	request_data_error := utils.RequestDataRequired(data, []string{"email", "password"})
+	if request_data_error != nil {
+		return c.Status(400).JSON(request_data_error)
 	}
 
 	// check the email has already been used
-	if databaseUser.CheckUserEmailExist(data["email"]) == 0 {
-		return c.Status(401).JSON(
-			fiber.Map{
-				"success": false,
-				"message": "Password or email is incorrect",
-			})
+	if userDatabase.CheckUserEmailExist(data["email"]) == 0 {
+		return c.Status(401).JSON(utils.RequestValueValid("password or email"))
 	}
 
 	//Get hash password from database
-	user_id, hash_password := databaseUser.GetUserPassword(data["email"])
+	user_data := userDatabase.GetUserPassword(data["email"])
 
 	//check password is correct
-	check_password := crypto.CheckPasswordHash(data["password"], hash_password)
+	check_password := utils.CheckPasswordHash(data["password"], user_data.Password)
 
 	// if password not correct
 	if !check_password {
-		return c.Status(401).JSON(fiber.Map{
-			"success": false,
-			"message": "Password or email is incorrect",
-		})
+		return c.Status(401).JSON(utils.RequestValueValid("password or email"))
 	}
 
 	//24 hours later time(for access token)
@@ -191,27 +135,17 @@ func LogIn(c *fiber.Ctx) error {
 	sixty_days_later := time.Now().Add(time.Hour * 24 * 60)
 
 	//generate Jwt token
-	access_token, access_token_err := crypto.GenerateJwtToken(user_id, "accessToken", twenty_four_hours_later.Unix())
-	refresh_token, refresh_token_err := crypto.GenerateJwtToken(user_id, "refreshToken", sixty_days_later.Unix())
+	access_token, access_token_err := utils.GenerateJwtToken(user_data.Id, "accessToken", twenty_four_hours_later.Unix())
+	refresh_token, refresh_token_err := utils.GenerateJwtToken(user_data.Id, "refreshToken", sixty_days_later.Unix())
 
 	//handle errors
 	if refresh_token_err != nil {
 		log.Println("| Path:", c.Path(), "| Data:", data, "| Message:", refresh_token_err)
-		c.Status(fiber.StatusInternalServerError)
-		return c.Status(500).JSON(fiber.Map{
-			"success": false,
-			"message": "Cloud not login when generating refresh token",
-			"error":   access_token_err,
-		})
+		return c.Status(500).JSON(utils.ErrorMessage("Error generating refresh token", refresh_token_err))
 	}
 	if access_token_err != nil {
 		log.Println("| Path:", c.Path(), "| Data:", data, "| Message:", access_token_err)
-		c.Status(fiber.StatusInternalServerError)
-		return c.Status(500).JSON(fiber.Map{
-			"success": false,
-			"message": "Cloud not login when generating access token",
-			"error":   access_token_err,
-		})
+		return c.Status(500).JSON(utils.ErrorMessage("Error generating access token", access_token_err))
 	}
 
 	//set cookies
@@ -241,36 +175,20 @@ func EmailExist(c *fiber.Ctx) error {
 	err := c.BodyParser(&data)
 
 	if err != nil {
-		return c.Status(400).JSON(
-			fiber.Map{
-				"success": false,
-				"message": "Invalid post request",
-			})
+		return c.Status(400).JSON(utils.InvalidRequest())
 	}
 
 	if data["email"] == "" {
-		return c.Status(400).JSON(
-			fiber.Map{
-				"success": false,
-				"message": "Email is required",
-			})
+		return c.Status(400).JSON(utils.RequestValueRequired("Email address"))
 	}
 
-	if !valid.IsValidEmail(data["email"]) {
-		return c.Status(400).JSON(fiber.Map{
-			"success": false,
-			"message": "This email address is not valid",
-		})
+	if !utils.IsValidEmail(data["email"]) {
+		return c.Status(400).JSON(utils.RequestValueValid("Email address"))
 	}
 
 	// Check if the email is already in the database
-	if databaseUser.CheckUserEmailExist(data["email"]) != 0 {
-		return c.Status(200).JSON(
-			fiber.Map{
-				"success": true,
-				"message": "This email is already in use",
-				"inuse":   true,
-			})
+	if userDatabase.CheckUserEmailExist(data["email"]) != 0 {
+		return c.Status(200).JSON(utils.RequestValueInUse("email address"))
 	}
 
 	return c.Status(200).JSON(
@@ -287,36 +205,20 @@ func UserNameExist(c *fiber.Ctx) error {
 	err := c.BodyParser(&data)
 
 	if err != nil {
-		return c.Status(400).JSON(
-			fiber.Map{
-				"success": false,
-				"message": "Invalid post request",
-			})
+		return c.Status(400).JSON(utils.InvalidRequest())
 	}
 
 	if data["user_name"] == "" {
-		return c.Status(400).JSON(
-			fiber.Map{
-				"success": false,
-				"message": "User name is required",
-			})
+		return c.Status(400).JSON(utils.RequestValueRequired("user name"))
 	}
 
-	if !valid.IsValidUsername(data["user_name"]) {
-		return c.Status(400).JSON(fiber.Map{
-			"success": false,
-			"message": "This user name is not valid",
-		})
+	if !utils.IsValidUsername(data["user_name"]) {
+		return c.Status(400).JSON(utils.RequestValueValid("user name"))
 	}
 
 	// Check if the user name is already in the database
-	if databaseUser.CheckUserNameExist(data["user_name"]) != 0 {
-		return c.Status(200).JSON(
-			fiber.Map{
-				"success": true,
-				"message": "This user name is already in use",
-				"inuse":   true,
-			})
+	if userDatabase.CheckUserNameExist(data["user_name"]) != 0 {
+		return c.Status(200).JSON(utils.RequestValueInUse("user name"))
 	}
 
 	return c.Status(200).JSON(

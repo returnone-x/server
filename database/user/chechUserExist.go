@@ -1,4 +1,4 @@
-package databaseUser
+package userDatabase
 
 import (
 	"returnone/config"

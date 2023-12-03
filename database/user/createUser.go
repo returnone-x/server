@@ -1,9 +1,9 @@
-package databaseUser
+package userDatabase
 
 import (
 	"returnone/config"
 	"returnone/models/user"
-	"returnone/utils/generate"
+	utils "returnone/utils"
 	"time"
 )
 
@@ -20,7 +20,7 @@ func CreateUser(
 	($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 	`
 
-	user_id := generate.GenerateUserAccountId()
+	user_id := utils.GenerateUserAccountId()
 
 	_, err := db.DB.Exec(
 		sqlString,

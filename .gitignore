@@ -12,6 +12,7 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+*log
 
 # IDE files
 .vscode
@@ -25,7 +26,7 @@
 *.workspace
 
 # Environment
-*.env
+.env
 
 # Dependencies
 /vendor/
