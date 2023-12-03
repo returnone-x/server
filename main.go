@@ -29,8 +29,6 @@ func main() {
 		TimeFormat: "2006/01/02 15:04:05",
 		TimeZone:   "local",
 	}))
-	file, _ := os.OpenFile("error-log.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-	log.SetOutput(file)
 
 	// encrypt cookie
 	app.Use(encryptcookie.New(encryptcookie.Config{
