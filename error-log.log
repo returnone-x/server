@@ -1,0 +1,4 @@
+2023/12/03 12:29:00 | Path: /v1/auth/signup | Data: map[email:tesgfrae@a.com password:secret user_name:tefdsstaa] | Message: pq: INSERT has more target columns than expressions
+2023/12/03 12:29:07 | Path: /v1/auth/signup | Data: map[email:tesgfrae@a.com password:secret user_name:tefdsstaa] | Message: pq: INSERT has more target columns than expressions
+2023/12/03 12:29:53 | Path: /v1/auth/signup | Data: map[email:tesgfrae@a.com password:secret user_name:tefdsstaa] | Message: pq: INSERT has more target columns than expressions
+2023/12/03 12:41:35 | Path: /v1/auth/signup | Data: map[email:tesgfrae@a.com password:secret user_name:tefdsstaa] | Message: pq: null value in column "email_verify" of relation "users" violates not-null constraint

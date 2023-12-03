@@ -4,7 +4,7 @@ import (
 	"returnone/config"
 )
 
-func CheckUserEmailExist(email string) int {
+func CheckUserEmailExist(email string) (int) {
 
 	var count int
 

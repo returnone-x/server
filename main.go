@@ -1,13 +1,15 @@
 package main
 
 import (
+	"log"
 	"os"
 	"returnone/config"
 	"returnone/routes/auth"
 	"time"
+
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/encryptcookie"
 	"github.com/gofiber/fiber/v2/middleware/csrf"
+	"github.com/gofiber/fiber/v2/middleware/encryptcookie"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/utils"
 	"github.com/joho/godotenv"
@@ -27,6 +29,8 @@ func main() {
 		TimeFormat: "2006/01/02 15:04:05",
 		TimeZone:   "local",
 	}))
+	file, _ := os.OpenFile("error-log.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	log.SetOutput(file)
 
 	// encrypt cookie
 	app.Use(encryptcookie.New(encryptcookie.Config{
@@ -34,13 +38,17 @@ func main() {
 	}))
 	
 	// protection Cross-Site Request Forgery (CSRF) attacks
-	app.Use(csrf.New(csrf.Config{
-		KeyLookup:      "header:X-Csrf-Token",
-		CookieName:     "csrf_",
-		CookieSameSite: "Strict",
-		Expiration:     72 * time.Hour,
-		KeyGenerator:   utils.UUID,
-	}))
+	// *when test csrf must change the ENV*
+	if os.Getenv("ENV") == "Production" {
+		app.Use(csrf.New(csrf.Config{
+			KeyLookup:      "header:X-Csrf-Token",
+			CookieName:     "csrf_",
+			CookieSameSite: "Strict",
+			Expiration:     72 * time.Hour,
+			KeyGenerator:   utils.UUID,
+		}))
+	}
+
 	
 	api_v1 := app.Group("/v1")
 

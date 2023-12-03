@@ -11,22 +11,28 @@ func CreateUser(
 	email string,
 	hash_password string,
 	user_name string,
-) userModles.UserAccount {
+) (userModles.UserAccount, error){
 	now_time := time.Now()
 	sqlString := `
 	INSERT INTO users 
-	(id, email, password, user_name, create_at, update_at) 
+	(id, email, password, user_name, email_verify, phone_verify, default_2fa, email_2fa, phone_2fa, totp_2fa, create_at, update_at) 
 	VALUES 
-	($1, $2, $3, $4, $5, $6)
+	($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 	`
 
 	user_id := generate.GenerateUserAccountId()
 
-	db.DB.Exec(
+	_, err := db.DB.Exec(
 		sqlString,
 		user_id, email,
 		hash_password,
 		user_name,
+		false,
+		false,
+		1,
+		true,
+		false,
+		false,
 		now_time,
 		now_time)
 	
@@ -35,15 +41,18 @@ func CreateUser(
 		Email:          email,
 		Phone:          "",
 		Phone_country:  "",
-		Password:       hash_password,
 		Email_verify:   false,
 		Phone_verify:   false,
 		Avatar:         "",
 		User_name:      user_name,
 		Github_connect: "",
 		Google_connect: "",
+		Email_2fa:      true,
+		Phone_2fa:      false,
+		Totp_2fa:       false,
 		Create_at:      now_time,
-		Update_at:      now_time}
+		Update_at:      now_time,
+	}
 
-	return insert_data
+	return insert_data, err
 }

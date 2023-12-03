@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"log"
 	"returnone/database/user"
 	"returnone/utils/crypto"
 	"returnone/utils/sendError"
@@ -68,10 +69,21 @@ func SignUp(c *fiber.Ctx) error {
 
 	hash_password, _ := crypto.HashPassword(data["password"])
 
-	save_data := databaseUser.CreateUser(data["email"], hash_password, data["user_name"])
+	save_data, save_data_err := databaseUser.CreateUser(data["email"], hash_password, data["user_name"])
 
-	//24 hours later time
+	if save_data_err != nil {
+		log.Println("| Path:", c.Path(), "| Data:", data, "| Message:", save_data_err)
+		c.Status(fiber.StatusInternalServerError)
+		return c.Status(500).JSON(fiber.Map{
+			"success": false,
+			"message": "Could not create this user when inserting into database",
+			"error":   save_data_err,
+		})
+	}
+
+	//24 hours later time(for access token)
 	twenty_four_hours_later := time.Now().Add(time.Hour * 24)
+	//60 days later time(for refresh tokne)
 	sixty_days_later := time.Now().Add(time.Hour * 24 * 60)
 
 	//generate Jwt token
@@ -79,23 +91,34 @@ func SignUp(c *fiber.Ctx) error {
 	refresh_token, refresh_token_err := crypto.GenerateJwtToken(save_data.Id, "refreshToken", sixty_days_later.Unix())
 
 	//handle errors
-	if refresh_token_err != nil || access_token_err != nil {
-        c.Status(fiber.StatusInternalServerError)
-        return c.Status(500).JSON(fiber.Map{
+	if refresh_token_err != nil {
+		log.Println("| Path:", c.Path(), "| Data:", data, "| Message:", refresh_token_err)
+		c.Status(fiber.StatusInternalServerError)
+		return c.Status(500).JSON(fiber.Map{
 			"success": false,
-            "message": "Cloud not login when generating JWT token",
-        })
-    }
+			"message": "Cloud not login when generating refresh token",
+			"error":   access_token_err,
+		})
+	}
+	if access_token_err != nil {
+		log.Println("| Path:", c.Path(), "| Data:", data, "| Message:", access_token_err)
+		c.Status(fiber.StatusInternalServerError)
+		return c.Status(500).JSON(fiber.Map{
+			"success": false,
+			"message": "Cloud not login when generating access token",
+			"error":   access_token_err,
+		})
+	}
 
 	//set cookies
 	access_token_cookie := fiber.Cookie{
-		Name: "accessToken",
-		Value: access_token,
+		Name:    "accessToken",
+		Value:   access_token,
 		Expires: twenty_four_hours_later,
 	}
 	refresh_token_cookie := fiber.Cookie{
-		Name: "refreshToken",
-		Value: refresh_token,
+		Name:    "refreshToken",
+		Value:   refresh_token,
 		Expires: sixty_days_later,
 	}
 	c.Cookie(&access_token_cookie)
@@ -107,6 +130,109 @@ func SignUp(c *fiber.Ctx) error {
 			"message": "Sign up successfully",
 			"data":    save_data,
 		})
+}
+
+func LogIn(c *fiber.Ctx) error {
+	var data map[string]string
+	// get data from body
+	err := c.BodyParser(&data)
+
+	if err != nil {
+		return c.Status(400).JSON(
+			fiber.Map{
+				"success": false,
+				"message": "Invalid post request",
+			})
+	}
+
+	if !valid.IsValidEmail(data["email"]) {
+		return c.Status(400).JSON(fiber.Map{
+			"success": false,
+			"message": "This email address is not valid",
+		})
+	}
+
+	// check if data is valid return error
+	request_data_error := sendError.RequestDataError(data, []string{"email", "password"})
+	if request_data_error != "" {
+		return c.Status(400).JSON(
+			fiber.Map{
+				"success": false,
+				"message": fmt.Sprintf("%v is required", request_data_error),
+			})
+	}
+
+	// check the email has already been used
+	if databaseUser.CheckUserEmailExist(data["email"]) == 0 {
+		return c.Status(401).JSON(
+			fiber.Map{
+				"success": false,
+				"message": "Password or email is incorrect",
+			})
+	}
+
+	//Get hash password from database
+	user_id, hash_password := databaseUser.GetUserPassword(data["email"])
+
+	//check password is correct
+	check_password := crypto.CheckPasswordHash(data["password"], hash_password)
+
+	// if password not correct
+	if !check_password {
+		return c.Status(401).JSON(fiber.Map{
+			"success": false,
+			"message": "Password or email is incorrect",
+		})
+	}
+
+	//24 hours later time(for access token)
+	twenty_four_hours_later := time.Now().Add(time.Hour * 24)
+	//60 days later time(for refresh tokne)
+	sixty_days_later := time.Now().Add(time.Hour * 24 * 60)
+
+	//generate Jwt token
+	access_token, access_token_err := crypto.GenerateJwtToken(user_id, "accessToken", twenty_four_hours_later.Unix())
+	refresh_token, refresh_token_err := crypto.GenerateJwtToken(user_id, "refreshToken", sixty_days_later.Unix())
+
+	//handle errors
+	if refresh_token_err != nil {
+		log.Println("| Path:", c.Path(), "| Data:", data, "| Message:", refresh_token_err)
+		c.Status(fiber.StatusInternalServerError)
+		return c.Status(500).JSON(fiber.Map{
+			"success": false,
+			"message": "Cloud not login when generating refresh token",
+			"error":   access_token_err,
+		})
+	}
+	if access_token_err != nil {
+		log.Println("| Path:", c.Path(), "| Data:", data, "| Message:", access_token_err)
+		c.Status(fiber.StatusInternalServerError)
+		return c.Status(500).JSON(fiber.Map{
+			"success": false,
+			"message": "Cloud not login when generating access token",
+			"error":   access_token_err,
+		})
+	}
+
+	//set cookies
+	access_token_cookie := fiber.Cookie{
+		Name:    "accessToken",
+		Value:   access_token,
+		Expires: twenty_four_hours_later,
+	}
+	refresh_token_cookie := fiber.Cookie{
+		Name:    "refreshToken",
+		Value:   refresh_token,
+		Expires: sixty_days_later,
+	}
+	c.Cookie(&access_token_cookie)
+	c.Cookie(&refresh_token_cookie)
+
+	return c.Status(200).JSON(fiber.Map{
+		"success": true,
+		"message": "Successful login",
+	})
+
 }
 
 func EmailExist(c *fiber.Ctx) error {
