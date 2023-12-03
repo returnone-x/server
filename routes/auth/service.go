@@ -182,6 +182,15 @@ func LogIn(c *fiber.Ctx) error {
 
 }
 
+
+func GoogleLogin(c *fiber.Ctx) error {
+	return c.SendString("test")
+}
+
+func GoogleCallBack(c *fiber.Ctx) error {
+	return c.SendString("test")
+}
+
 func EmailExist(c *fiber.Ctx) error {
 	var data map[string]string
 
