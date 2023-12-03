@@ -15,11 +15,12 @@ import (
 )
 
 func main() {
-
 	godotenv.Load()
 
-	db.Connect()
-	
+	// init config
+	config.Connect()
+	config.GoogleConfig()
+
 	app := fiber.New()
 
 	// Set logger

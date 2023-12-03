@@ -1,19 +1,26 @@
 package auth
 
 import (
+	"context"
+	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
+	"returnone/config"
 	"returnone/database/user"
 	utils "returnone/utils"
 	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/pquerna/otp/totp"
 )
 
-
-//24 hours later time(for access token)
+// 24 hours later time(for access token)
 var twenty_four_hours_later = time.Now().Add(time.Hour * 24)
-//60 days later time(for refresh tokne)
+
+// 60 days later time(for refresh tokne)
 var sixty_days_later = time.Now().Add(time.Hour * 24 * 60)
 
 func SignUp(c *fiber.Ctx) error {
@@ -116,14 +123,12 @@ func LogIn(c *fiber.Ctx) error {
 		return c.Status(400).JSON(request_data_error)
 	}
 
-	// check the email has already been used
-	if userDatabase.CheckUserEmailExist(data["email"]) == 0 {
+	//Get hash password from database and check does email exist
+	user_data, user_data_err := userDatabase.GetUserPassword(data["email"])
+
+	if user_data_err == sql.ErrNoRows {
 		return c.Status(401).JSON(utils.RequestValueValid("password or email"))
 	}
-
-	//Get hash password from database
-	user_data := userDatabase.GetUserPassword(data["email"])
-
 	//check password is correct
 	check_password := utils.CheckPasswordHash(data["password"], user_data.Password)
 
@@ -147,15 +152,15 @@ func LogIn(c *fiber.Ctx) error {
 	}
 
 	if user_data.Default_2fa == 3 {
-		if data["otp"] == ""{
+		if data["otp"] == "" {
 			return c.Status(403).JSON(utils.ErrorMessage("OTP is required", nil))
 		}
 		fmt.Println(user_data.Totp)
 
 		valid := totp.Validate(data["otp"], user_data.Totp)
-	
+
 		fmt.Println("current one-time password is:", user_data.Totp)
-	
+
 		fmt.Println("verify OTP success:", valid)
 		if !valid {
 			return c.Status(403).JSON(utils.ErrorMessage("OTP is not valid", nil))
@@ -182,13 +187,97 @@ func LogIn(c *fiber.Ctx) error {
 
 }
 
-
 func GoogleLogin(c *fiber.Ctx) error {
-	return c.SendString("test")
+	url := config.AppConfig.GoogleLoginConfig.AuthCodeURL("randomstate")
+
+	c.Status(fiber.StatusSeeOther)
+	c.Redirect(url)
+	return c.JSON(url)
 }
 
 func GoogleCallBack(c *fiber.Ctx) error {
-	return c.SendString("test")
+	state := c.Query("state")
+	if state != "randomstate" {
+		return c.SendString("States don't Match!!")
+	}
+
+	code := c.Query("code")
+
+	googlecon := config.GoogleConfig()
+
+	token, err := googlecon.Exchange(context.Background(), code)
+	if err != nil {
+		return c.SendString("Code-Token Exchange Failed")
+	}
+
+	resp, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
+	if err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("User data fetch failed", err))
+	}
+
+	user_data_byte, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("JSON parsing failed", err))
+	}
+
+	json_str := string(user_data_byte)
+
+	var user_data map[string]interface{}
+	err = json.Unmarshal([]byte(json_str), &user_data)
+	if err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("JSON unmarshal failed", err))
+	}
+	get_usre_data, get_user_data_error := userDatabase.GetGoogleAccount(user_data["email"].(string))
+
+	fmt.Println(get_user_data_error)
+	fmt.Println(get_usre_data)
+	if get_user_data_error == nil {
+		return c.Status(200).JSON(fiber.Map{
+			"success": true,
+			"message": "Account successfully login or signup",
+			"data":    get_usre_data,
+		})
+	}
+	save_data, save_data_err := userDatabase.CreateUserWithGoogleLogin(user_data["email"].(string), user_data["picture"].(string))
+
+	if save_data_err != nil {
+		log.Println("| Path:", c.Path(), "| Data:", user_data, "| Message:", save_data_err)
+		return c.Status(500).JSON(utils.ErrorMessage("Error creating user", save_data_err))
+	}
+
+	//generate Jwt token
+	access_token, access_token_err := utils.GenerateJwtToken(save_data.Id, "accessToken", twenty_four_hours_later.Unix())
+	refresh_token, refresh_token_err := utils.GenerateJwtToken(save_data.Id, "refreshToken", sixty_days_later.Unix())
+
+	//handle errors
+	if refresh_token_err != nil {
+		log.Println("| Path:", c.Path(), "| Data:", user_data, "| Message:", refresh_token_err)
+		return c.Status(500).JSON(utils.ErrorMessage("Error generating refresh token", refresh_token_err))
+	}
+	if access_token_err != nil {
+		log.Println("| Path:", c.Path(), "| Data:", user_data, "| Message:", access_token_err)
+		return c.Status(500).JSON(utils.ErrorMessage("Error generating access token", access_token_err))
+	}
+
+	//set cookies
+	access_token_cookie := fiber.Cookie{
+		Name:    "accessToken",
+		Value:   access_token,
+		Expires: twenty_four_hours_later,
+	}
+	refresh_token_cookie := fiber.Cookie{
+		Name:    "refreshToken",
+		Value:   refresh_token,
+		Expires: sixty_days_later,
+	}
+	c.Cookie(&access_token_cookie)
+	c.Cookie(&refresh_token_cookie)
+
+	return c.Status(200).JSON(fiber.Map{
+		"success": true,
+		"message": "Account successfully login or signup",
+		"data":    save_data,
+	})
 }
 
 func EmailExist(c *fiber.Ctx) error {

@@ -1,11 +1,11 @@
-package db
+package config
 
 import (
 	"database/sql"
 	"fmt"
+	_ "github.com/lib/pq"
 	"log"
 	"os"
-	_ "github.com/lib/pq"
 )
 
 var DB *sql.DB
@@ -23,7 +23,7 @@ func Connect() {
 	connection := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Taipei", psql_host, psql_user, psql_password, psql_dbname, psql_port)
 
 	db, err := sql.Open("postgres", connection)
-	
+
 	DB = db
 
 	if err != nil {
