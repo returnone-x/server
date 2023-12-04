@@ -60,7 +60,7 @@ func CreateUser(
 }
 
 func CreateUserWithGoogleLogin(
-	email string,
+	google_id string,
 	avatar string,
 ) (userModles.UserAccount, error) {
 	now_time := time.Now()
@@ -75,23 +75,23 @@ func CreateUserWithGoogleLogin(
 
 	_, err := config.DB.Exec(
 		sqlString,
-		user_id, email,
+		user_id, "",
 		user_id,
-		true,
 		false,
-		1,
+		false,
+		0,
 		true,
 		false,
 		false,
 		"",
 		avatar,
-		email,
+		google_id,
 		now_time,
 		now_time)
 
 	insert_data := userModles.UserAccount{
 		Id:             user_id,
-		Email:          email,
+		Email:          "",
 		Phone:          "",
 		Phone_country:  "",
 		Email_verify:   true,
@@ -99,7 +99,58 @@ func CreateUserWithGoogleLogin(
 		Avatar:         avatar,
 		User_name:      user_id,
 		Github_connect: "",
-		Google_connect: email,
+		Google_connect: google_id,
+		Email_2fa:      true,
+		Phone_2fa:      false,
+		Totp_2fa:       false,
+		Create_at:      now_time,
+		Update_at:      now_time,
+	}
+	fmt.Sprintln(err)
+	return insert_data, err
+}
+
+func CreateUserWithGithubLogin(
+	github_id string,
+	avatar string,
+) (userModles.UserAccount, error) {
+	now_time := time.Now()
+	sqlString := `
+	INSERT INTO users 
+	(id, email, user_name, email_verify, phone_verify, default_2fa, email_2fa, phone_2fa, totp_2fa, totp, avatar, github_connect, create_at, update_at) 
+	VALUES 
+	($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+	`
+
+	user_id := utils.GenerateUserAccountId()
+
+	_, err := config.DB.Exec(
+		sqlString,
+		user_id, "",
+		user_id,
+		false,
+		false,
+		0,
+		true,
+		false,
+		false,
+		"",
+		avatar,
+		github_id,
+		now_time,
+		now_time)
+
+	insert_data := userModles.UserAccount{
+		Id:             user_id,
+		Email:          "",
+		Phone:          "",
+		Phone_country:  "",
+		Email_verify:   true,
+		Phone_verify:   false,
+		Avatar:         avatar,
+		User_name:      user_id,
+		Github_connect: github_id,
+		Google_connect: "",
 		Email_2fa:      true,
 		Phone_2fa:      false,
 		Totp_2fa:       false,

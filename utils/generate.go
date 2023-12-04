@@ -17,7 +17,7 @@ func GenerateUserAccountId() string {
 }
 
 func GenerateRandomBase64String() (string, error) {
-	randomBytes := make([]byte, 16)
+	randomBytes := make([]byte, 32)
 	_, err := rand.Read(randomBytes)
 	if err != nil {
 		return "", err

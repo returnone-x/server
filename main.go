@@ -19,7 +19,8 @@ func main() {
 
 	// init config
 	config.Connect()
-	config.GoogleConfig()
+	config.GoogleOauth()
+	config.GithubOauth()
 
 	app := fiber.New()
 

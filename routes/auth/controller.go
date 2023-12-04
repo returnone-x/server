@@ -13,6 +13,6 @@ func Setup(app fiber.Router) {
 	// oauth2.0 login or register
 	app.Get("/oauth/google", GoogleLogin)
 	app.Get("/oauth/callback/google", GoogleCallBack)
-	// app.Post("/oauth/github")
-	// app.Post("/oauth/callback/github")
+	app.Get("/oauth/github", GithubLogin)
+	app.Get("/oauth/callback/github", GithubCallBack)
 }
