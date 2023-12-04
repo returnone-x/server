@@ -16,7 +16,7 @@ func CreateUser(
 	now_time := time.Now()
 	sqlString := `
 	INSERT INTO users 
-	(id, email, password, user_name, email_verify, phone_verify, default_2fa, email_2fa, phone_2fa, totp_2fa, ,totp, create_at, update_at) 
+	(id, email, password, user_name, email_verify, phone_verify, default_2fa, email_2fa, phone_2fa, totp_2fa, totp, create_at, update_at) 
 	VALUES 
 	($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 	`
