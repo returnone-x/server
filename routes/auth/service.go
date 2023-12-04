@@ -8,11 +8,13 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"returnone/config"
+	"returnone/database/redis"
 	"returnone/database/user"
 	utils "returnone/utils"
+	"strings"
 	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/pquerna/otp/totp"
 )
@@ -155,13 +157,9 @@ func LogIn(c *fiber.Ctx) error {
 		if data["otp"] == "" {
 			return c.Status(403).JSON(utils.ErrorMessage("OTP is required", nil))
 		}
-		fmt.Println(user_data.Totp)
 
 		valid := totp.Validate(data["otp"], user_data.Totp)
 
-		fmt.Println("current one-time password is:", user_data.Totp)
-
-		fmt.Println("verify OTP success:", valid)
 		if !valid {
 			return c.Status(403).JSON(utils.ErrorMessage("OTP is not valid", nil))
 		}
@@ -188,7 +186,23 @@ func LogIn(c *fiber.Ctx) error {
 }
 
 func GoogleLogin(c *fiber.Ctx) error {
-	url := config.AppConfig.GoogleLoginConfig.AuthCodeURL(os.Getenv("GOOGLE_SERVER_SECRET"))
+	state_token_key, state_token_key_err := utils.GenerateRandomBase64String()
+	state_token, state_token_err := utils.GenerateRandomBase64String()
+
+	if state_token_key_err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error generate state token", state_token_key_err))
+	}
+	if state_token_err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error generate state token", state_token_key_err))
+	}
+
+	save_state_token_err := redis.CreateStringData(state_token_key, state_token, time.Minute * 15)
+
+	if save_state_token_err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error saving state token", save_state_token_err))	
+	}
+
+	url := config.AppConfig.GoogleLoginConfig.AuthCodeURL(fmt.Sprintf("%v %v", state_token_key, state_token))
 
 	c.Status(fiber.StatusSeeOther)
 	c.Redirect(url)
@@ -197,8 +211,18 @@ func GoogleLogin(c *fiber.Ctx) error {
 
 func GoogleCallBack(c *fiber.Ctx) error {
 	state := c.Query("state")
+
+	result := strings.Split(state, " ")
+
+	save_token, redis_error := redis.GetStrigData(result[0])
+	if redis_error != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error get state token", redis_error))	
+	}
+
+	defer redis.DeleteStringData(result[0])
+
 	//check the states
-	if state != os.Getenv("GOOGLE_SERVER_SECRET") {
+	if result[1] != save_token {
 		return c.Status(500).JSON(utils.ErrorMessage("States don't match", nil))
 	}
 
@@ -230,8 +254,6 @@ func GoogleCallBack(c *fiber.Ctx) error {
 	}
 	get_usre_data, get_user_data_error := userDatabase.GetGoogleAccount(user_data["email"].(string))
 
-	fmt.Println(get_user_data_error)
-	fmt.Println(get_usre_data)
 	if get_user_data_error == nil {
 		return c.Status(200).JSON(fiber.Map{
 			"success": true,

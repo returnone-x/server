@@ -1,9 +1,11 @@
 package untils
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
-	"time"
 	"github.com/bwmarrin/snowflake"
+	"time"
 )
 
 func GenerateUserAccountId() string {
@@ -12,4 +14,16 @@ func GenerateUserAccountId() string {
 	id := node.Generate()
 
 	return fmt.Sprint(id)
+}
+
+func GenerateRandomBase64String() (string, error) {
+	randomBytes := make([]byte, 16)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		return "", err
+	}
+
+	// 將隨機數轉換成Base64編碼的字符串
+	state := base64.URLEncoding.EncodeToString(randomBytes)
+	return state, nil
 }
