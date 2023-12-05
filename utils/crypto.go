@@ -1,10 +1,10 @@
 package untils
 
 import (
-	"github.com/golang-jwt/jwt"
-	"golang.org/x/crypto/bcrypt"
 	"os"
 	"time"
+	"github.com/golang-jwt/jwt"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func HashPassword(password string) (string, error) {
@@ -31,4 +31,14 @@ func GenerateJwtToken(user_id string, Audience string, exp_time int64) (string, 
 	token, err := claims.SignedString([]byte(SecretKey))
 
 	return token, err
+}
+
+func VerifyJwtToken(jwt_token *jwt.Token, id string) (bool, error) {
+
+	// SecretKey := os.Getenv("JWT_SECRET")
+
+	claims := jwt_token.Claims.(jwt.MapClaims)
+	jwt_token_user_id := claims["user_id"].(string)
+
+	return jwt_token_user_id == id, nil
 }

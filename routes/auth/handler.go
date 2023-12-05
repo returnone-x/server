@@ -10,20 +10,22 @@ import (
 	"net/http"
 	"returnone/config"
 	"returnone/database/redis"
+	tokenDatabase "returnone/database/token"
 	"returnone/database/user"
 	utils "returnone/utils"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt"
 	"github.com/pquerna/otp/totp"
 )
 
-// 24 hours later time(for access token)
-var twenty_four_hours_later = time.Now().Add(time.Hour * 24)
+// when this time is exceeded, the token will become invalid. (for access token)
+var access_token_exp = time.Now().Add(time.Minute * 1)
 
-// 60 days later time(for refresh tokne)
-var sixty_days_later = time.Now().Add(time.Hour * 24 * 60)
+// when this time is exceeded, the token will become invalid. (for refresh token)
+var refresh_token_exp = time.Now().Add(time.Hour * 24 * 60)
 
 func SignUp(c *fiber.Ctx) error {
 	var data map[string]string
@@ -33,7 +35,7 @@ func SignUp(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(
 			fiber.Map{
-				"success": false,
+				"status":  "success",
 				"message": "Invalid post request",
 			})
 	}
@@ -72,8 +74,8 @@ func SignUp(c *fiber.Ctx) error {
 	}
 
 	//generate Jwt token
-	access_token, access_token_err := utils.GenerateJwtToken(save_data.Id, "accessToken", twenty_four_hours_later.Unix())
-	refresh_token, refresh_token_err := utils.GenerateJwtToken(save_data.Id, "refreshToken", sixty_days_later.Unix())
+	access_token, access_token_err := utils.GenerateJwtToken(save_data.Id, "accessToken", access_token_exp.Unix())
+	refresh_token, refresh_token_err := utils.GenerateJwtToken(save_data.Id, "refreshToken", refresh_token_exp.Unix())
 
 	//handle errors
 	if refresh_token_err != nil {
@@ -89,19 +91,19 @@ func SignUp(c *fiber.Ctx) error {
 	access_token_cookie := fiber.Cookie{
 		Name:    "accessToken",
 		Value:   access_token,
-		Expires: twenty_four_hours_later,
+		Expires: access_token_exp,
 	}
 	refresh_token_cookie := fiber.Cookie{
 		Name:    "refreshToken",
 		Value:   refresh_token,
-		Expires: sixty_days_later,
+		Expires: refresh_token_exp,
 	}
 	c.Cookie(&access_token_cookie)
 	c.Cookie(&refresh_token_cookie)
 
 	return c.Status(200).JSON(
 		fiber.Map{
-			"success": true,
+			"status":  "success",
 			"message": "Sign up successfully",
 			"data":    save_data,
 		})
@@ -140,8 +142,8 @@ func LogIn(c *fiber.Ctx) error {
 	}
 
 	//generate Jwt token
-	access_token, access_token_err := utils.GenerateJwtToken(user_data.Id, "accessToken", twenty_four_hours_later.Unix())
-	refresh_token, refresh_token_err := utils.GenerateJwtToken(user_data.Id, "refreshToken", sixty_days_later.Unix())
+	access_token, access_token_err := utils.GenerateJwtToken(user_data.Id, "accessToken", access_token_exp.Unix())
+	refresh_token, refresh_token_err := utils.GenerateJwtToken(user_data.Id, "refreshToken", refresh_token_exp.Unix())
 
 	//handle errors
 	if refresh_token_err != nil {
@@ -168,18 +170,18 @@ func LogIn(c *fiber.Ctx) error {
 	access_token_cookie := fiber.Cookie{
 		Name:    "accessToken",
 		Value:   access_token,
-		Expires: twenty_four_hours_later,
+		Expires: access_token_exp,
 	}
 	refresh_token_cookie := fiber.Cookie{
 		Name:    "refreshToken",
 		Value:   refresh_token,
-		Expires: sixty_days_later,
+		Expires: refresh_token_exp,
 	}
 	c.Cookie(&access_token_cookie)
 	c.Cookie(&refresh_token_cookie)
 
 	return c.Status(200).JSON(fiber.Map{
-		"success": true,
+		"status":  "success",
 		"message": "Successful login",
 	})
 
@@ -266,8 +268,8 @@ func GoogleCallBack(c *fiber.Ctx) error {
 	get_usre_data, get_user_data_error := userDatabase.GetGoogleAccount(user_data["id"].(string))
 
 	//generate Jwt token
-	access_token, access_token_err := utils.GenerateJwtToken(user_data["id"].(string), "accessToken", twenty_four_hours_later.Unix())
-	refresh_token, refresh_token_err := utils.GenerateJwtToken(user_data["id"].(string), "refreshToken", sixty_days_later.Unix())
+	access_token, access_token_err := utils.GenerateJwtToken(user_data["id"].(string), "accessToken", access_token_exp.Unix())
+	refresh_token, refresh_token_err := utils.GenerateJwtToken(user_data["id"].(string), "refreshToken", refresh_token_exp.Unix())
 
 	//handle errors
 	if refresh_token_err != nil {
@@ -283,12 +285,12 @@ func GoogleCallBack(c *fiber.Ctx) error {
 	access_token_cookie := fiber.Cookie{
 		Name:    "accessToken",
 		Value:   access_token,
-		Expires: twenty_four_hours_later,
+		Expires: access_token_exp,
 	}
 	refresh_token_cookie := fiber.Cookie{
 		Name:    "refreshToken",
 		Value:   refresh_token,
-		Expires: sixty_days_later,
+		Expires: refresh_token_exp,
 	}
 
 	// if cant found this user than this user is login
@@ -296,7 +298,7 @@ func GoogleCallBack(c *fiber.Ctx) error {
 		c.Cookie(&access_token_cookie)
 		c.Cookie(&refresh_token_cookie)
 		return c.Status(200).JSON(fiber.Map{
-			"success": true,
+			"status":  "success",
 			"message": "Account successfully login",
 			"data":    get_usre_data,
 		})
@@ -313,7 +315,7 @@ func GoogleCallBack(c *fiber.Ctx) error {
 	c.Cookie(&refresh_token_cookie)
 
 	return c.Status(200).JSON(fiber.Map{
-		"success": true,
+		"status":  "success",
 		"message": "Account successfully signup",
 		"data":    save_data,
 	})
@@ -415,8 +417,8 @@ func GithubCallBack(c *fiber.Ctx) error {
 	get_usre_data, get_user_data_error := userDatabase.GetGithubAccount(user_github_id)
 
 	//generate Jwt token
-	access_token, access_token_err := utils.GenerateJwtToken(user_github_id, "accessToken", twenty_four_hours_later.Unix())
-	refresh_token, refresh_token_err := utils.GenerateJwtToken(user_github_id, "refreshToken", sixty_days_later.Unix())
+	access_token, access_token_err := utils.GenerateJwtToken(user_github_id, "accessToken", access_token_exp.Unix())
+	refresh_token, refresh_token_err := utils.GenerateJwtToken(user_github_id, "refreshToken", refresh_token_exp.Unix())
 
 	//handle errors
 	if refresh_token_err != nil {
@@ -432,19 +434,19 @@ func GithubCallBack(c *fiber.Ctx) error {
 	access_token_cookie := fiber.Cookie{
 		Name:    "accessToken",
 		Value:   access_token,
-		Expires: twenty_four_hours_later,
+		Expires: access_token_exp,
 	}
 	refresh_token_cookie := fiber.Cookie{
 		Name:    "refreshToken",
 		Value:   refresh_token,
-		Expires: sixty_days_later,
+		Expires: refresh_token_exp,
 	}
 	// if cant found this user than this user is login
 	if get_user_data_error == nil {
 		c.Cookie(&access_token_cookie)
 		c.Cookie(&refresh_token_cookie)
 		return c.Status(200).JSON(fiber.Map{
-			"success": true,
+			"status":  "success",
 			"message": "Account successfully login",
 			"data":    get_usre_data,
 		})
@@ -461,10 +463,59 @@ func GithubCallBack(c *fiber.Ctx) error {
 	c.Cookie(&refresh_token_cookie)
 
 	return c.Status(200).JSON(fiber.Map{
-		"success": true,
+		"status":  "success",
 		"message": "Account successfully signup",
 		"data":    save_data,
 	})
+}
+
+func RefreshToken(c *fiber.Ctx) error {
+	var data map[string]string
+
+	err := c.BodyParser(&data)
+
+	token := c.Locals("refresh_token_context").(*jwt.Token)
+	refresh_token := token.Raw
+	refresh_token_exist := tokenDatabase.GetRefreshToken(refresh_token)
+	
+	if refresh_token_exist == 0 {
+		return c.Status(401).JSON(utils.ErrorMessage("Token has been used", nil))
+	}
+	
+	tokenDatabase.CreateRefreshToken(refresh_token)
+	if err != nil {
+		return c.Status(400).JSON(utils.InvalidRequest())
+	}
+
+	if data["email"] == "" {
+		return c.Status(400).JSON(utils.RequestValueRequired("Email address"))
+	}
+
+	if !utils.IsValidEmail(data["email"]) {
+		return c.Status(400).JSON(utils.RequestValueValid("Email address"))
+	}
+
+	// Check if the email is already in the database
+	if userDatabase.CheckUserEmailExist(data["email"]) != 0 {
+		return c.Status(200).JSON(utils.RequestValueInUse("email address"))
+	}
+
+	return c.Status(200).JSON(
+		fiber.Map{
+			"status":  "success",
+			"message": "This email has not been used yet",
+			"inuse":   false,
+		})
+}
+
+func CheckAuthorizationa(c *fiber.Ctx) error {
+
+	// cuz middleware has already checked the authorization so dont need to check again
+	return c.Status(200).JSON(
+		fiber.Map{
+			"status":  "success",
+			"message": "This user has been authorized",
+		})
 }
 
 func EmailExist(c *fiber.Ctx) error {
@@ -491,7 +542,7 @@ func EmailExist(c *fiber.Ctx) error {
 
 	return c.Status(200).JSON(
 		fiber.Map{
-			"success": true,
+			"status":  "success",
 			"message": "This email has not been used yet",
 			"inuse":   false,
 		})
@@ -520,7 +571,7 @@ func UserNameExist(c *fiber.Ctx) error {
 
 	return c.Status(200).JSON(
 		fiber.Map{
-			"success": true,
+			"status":  "success",
 			"message": "This user name has not been used yet",
 			"inuse":   false,
 		})

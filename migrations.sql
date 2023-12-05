@@ -21,3 +21,9 @@ CREATE TABLE users
  update_at      timestamp NOT NULL,
  CONSTRAINT PK_1 PRIMARY KEY ( "id" )
 );
+
+CREATE TABLE tokens
+(
+    token text PRIMARY KEY,
+    used boolean NOT NULL
+);

@@ -10,7 +10,7 @@ func RequestDataRequired(data map[string]string, data_name []string) fiber.Map {
 	for i := 0; i < len(data_name); i++ {
 		if data[data_name[i]] == "" {
 			return fiber.Map{
-				"success": false,
+				"status": "error",
 				"message": fmt.Sprintf("%v is required", data_name[i]),
 			}
 		}
@@ -20,27 +20,27 @@ func RequestDataRequired(data map[string]string, data_name []string) fiber.Map {
 // this is for single values check the value is exists
 func RequestValueRequired(value string) fiber.Map {
 	return fiber.Map{
-		"success": false,
+		"status": "error",
 		"message": fmt.Sprintf("%v is required", value),
 	}
 }
 
 func InvalidRequest() fiber.Map{
 	return fiber.Map{
-		"success": false,
+		"status": "error",
 		"message": "Invalid request",
 	}
 }
 func RequestValueValid(value string) fiber.Map {
 	return fiber.Map{
-		"success": false,
+		"status": "error",
 		"message": fmt.Sprintf("This %v is not valid", value),
 	}
 }
 
 func RequestValueInUse(value string) fiber.Map {
 	return fiber.Map{
-		"success": false,
+		"status": "error",
 		"message": fmt.Sprintf("This %v is already in use", value),
 		"Inuse": true,
 	}
@@ -48,7 +48,7 @@ func RequestValueInUse(value string) fiber.Map {
 
 func ErrorMessage(message string, err error) fiber.Map {
 	return fiber.Map{
-		"success": false,
+		"status": "error",
 		"message": message,
 		"error":   err,
 	}
