@@ -10,22 +10,37 @@ import (
 	"net/http"
 	"returnone/config"
 	"returnone/database/redis"
-	tokenDatabase "returnone/database/token"
 	"returnone/database/user"
 	utils "returnone/utils"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt"
+	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/pquerna/otp/totp"
 )
 
-// when this time is exceeded, the token will become invalid. (for access token)
-var access_token_exp = time.Now().Add(time.Minute * 1)
 
+// so the process is: (refresh token)
+// login -> save refresh token to redis, the data is:
+// key: refrshToken/xxxxxxxxxxx, value: eyxxxxx.xxxxxxxxxxxxxxxx.xxxx 1
+// refresh token:
+// aud: refrshToken/xxxxxxxxxxx 1
+// refresh token:
+// check is the use times are same
+// change redis:
+// key: refrshToken/xxxxxxxxxxx, value: eyxxxxx.xxxxxxxxxxxxxxxx.xxxx 2
+// change aud:
+// aud: refrshToken/xxxxxxxxxxx 1
+// the refreshToken/xxxxxxxxxxx will always be same 
+
+
+// when this time is exceeded, the token will become invalid. (for access token)
+var access_token_exp = time.Now().Add(time.Minute * 15)
 // when this time is exceeded, the token will become invalid. (for refresh token)
-var refresh_token_exp = time.Now().Add(time.Hour * 24 * 60)
+var refresh_token_exp = time.Now().Add(time.Hour * 24 * 30)
+var refresh_token_exp_duration = time.Hour * 24 * 30
 
 func SignUp(c *fiber.Ctx) error {
 	var data map[string]string
@@ -73,9 +88,14 @@ func SignUp(c *fiber.Ctx) error {
 		return c.Status(500).JSON(utils.ErrorMessage("Error creating user", save_data_err))
 	}
 
+	// btw actually access_token_id not been used in this program (i dont know if i will use it in the future)
+	access_token_id := utils.GenerateTokenId()
+	// generate token id for check the token have been used or not
+	refresh_token_id := utils.GenerateTokenId()
+
 	//generate Jwt token
-	access_token, access_token_err := utils.GenerateJwtToken(save_data.Id, "accessToken", access_token_exp.Unix())
-	refresh_token, refresh_token_err := utils.GenerateJwtToken(save_data.Id, "refreshToken", refresh_token_exp.Unix())
+	access_token, access_token_err := utils.GenerateJwtToken(save_data.Id, "accessToken/"+access_token_id, "accessToken", access_token_exp.Unix())
+	refresh_token, refresh_token_err := utils.GenerateJwtToken(save_data.Id, "refreshToken/"+refresh_token_id+" 1", "refreshToken", refresh_token_exp.Unix())
 
 	//handle errors
 	if refresh_token_err != nil {
@@ -85,6 +105,13 @@ func SignUp(c *fiber.Ctx) error {
 	if access_token_err != nil {
 		log.Println("| Path:", c.Path(), "| Data:", data, "| Message:", access_token_err)
 		return c.Status(500).JSON(utils.ErrorMessage("Error generating access token", access_token_err))
+	}
+
+	// save refresh token to redis
+	save_refresh_token_err := redisDB.CreateStringData("refreshToken/"+refresh_token_id, refresh_token+" 1", refresh_token_exp_duration)
+
+	if save_refresh_token_err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error saving refresh token token", save_refresh_token_err))
 	}
 
 	//set cookies
@@ -141,9 +168,14 @@ func LogIn(c *fiber.Ctx) error {
 		return c.Status(401).JSON(utils.RequestValueValid("password or email"))
 	}
 
+	// btw actually access_token_id not been used in this program (i dont know if i will use it in the future)
+	access_token_id := utils.GenerateTokenId()
+	// generate token id for check the token have been used or not
+	refresh_token_id := utils.GenerateTokenId()
+
 	//generate Jwt token
-	access_token, access_token_err := utils.GenerateJwtToken(user_data.Id, "accessToken", access_token_exp.Unix())
-	refresh_token, refresh_token_err := utils.GenerateJwtToken(user_data.Id, "refreshToken", refresh_token_exp.Unix())
+	access_token, access_token_err := utils.GenerateJwtToken(user_data.Id, "accessToken/"+access_token_id, "accessToken", access_token_exp.Unix())
+	refresh_token, refresh_token_err := utils.GenerateJwtToken(user_data.Id, "refreshToken/"+refresh_token_id+" 1", "refreshToken", refresh_token_exp.Unix())
 
 	//handle errors
 	if refresh_token_err != nil {
@@ -153,6 +185,13 @@ func LogIn(c *fiber.Ctx) error {
 	if access_token_err != nil {
 		log.Println("| Path:", c.Path(), "| Data:", data, "| Message:", access_token_err)
 		return c.Status(500).JSON(utils.ErrorMessage("Error generating access token", access_token_err))
+	}
+
+	// save refresh token to redis
+	save_refresh_token_err := redisDB.CreateStringData("refreshToken/"+refresh_token_id, refresh_token+" 1", refresh_token_exp_duration)
+
+	if save_refresh_token_err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error saving refresh token token", save_refresh_token_err))
 	}
 
 	if user_data.Default_2fa == 3 {
@@ -201,7 +240,7 @@ func GoogleLogin(c *fiber.Ctx) error {
 	}
 
 	// save state token to redis (for verify vaild)
-	save_state_token_err := redis.CreateStringData(state_token_key, state_token, time.Minute*15)
+	save_state_token_err := redisDB.CreateStringData(state_token_key, state_token, time.Minute*15)
 
 	if save_state_token_err != nil {
 		return c.Status(500).JSON(utils.ErrorMessage("Error saving state token", save_state_token_err))
@@ -223,13 +262,13 @@ func GoogleCallBack(c *fiber.Ctx) error {
 	result := strings.Split(state, " ")
 
 	// get state token from redis for verify vaild
-	save_token, redis_error := redis.GetStrigData(result[0])
+	save_token, redis_error := redisDB.GetStrigData(result[0])
 	if redis_error != nil {
 		return c.Status(500).JSON(utils.ErrorMessage("Error get state token", redis_error))
 	}
 
 	// if this function is done than run this (i dont want to run this is the middle because it will take some time)
-	defer redis.DeleteStringData(result[0])
+	defer redisDB.DeleteStringData(result[0])
 
 	//check the states
 	if result[1] != save_token {
@@ -267,9 +306,14 @@ func GoogleCallBack(c *fiber.Ctx) error {
 	// get user data from database (verify this user is log in or sign up)
 	get_usre_data, get_user_data_error := userDatabase.GetGoogleAccount(user_data["id"].(string))
 
+	// btw actually access_token_id not been used in this program (i dont know if i will use it in the future)
+	access_token_id := utils.GenerateTokenId()
+	// generate token id for check the token have been used or not
+	refresh_token_id := utils.GenerateTokenId()
+
 	//generate Jwt token
-	access_token, access_token_err := utils.GenerateJwtToken(user_data["id"].(string), "accessToken", access_token_exp.Unix())
-	refresh_token, refresh_token_err := utils.GenerateJwtToken(user_data["id"].(string), "refreshToken", refresh_token_exp.Unix())
+	access_token, access_token_err := utils.GenerateJwtToken(user_data["id"].(string), "accessToken/"+access_token_id, "accessToken", access_token_exp.Unix())
+	refresh_token, refresh_token_err := utils.GenerateJwtToken(user_data["id"].(string), "refreshToken/"+refresh_token_id+" 1", "refreshToken", refresh_token_exp.Unix())
 
 	//handle errors
 	if refresh_token_err != nil {
@@ -279,6 +323,13 @@ func GoogleCallBack(c *fiber.Ctx) error {
 	if access_token_err != nil {
 		log.Println("| Path:", c.Path(), "| Data:", user_data, "| Message:", access_token_err)
 		return c.Status(500).JSON(utils.ErrorMessage("Error generating access token", access_token_err))
+	}
+
+	// save refresh token to redis
+	save_refresh_token_err := redisDB.CreateStringData("refreshToken/"+refresh_token_id, refresh_token+" 1", refresh_token_exp_duration)
+
+	if save_refresh_token_err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error saving refresh token token", save_refresh_token_err))
 	}
 
 	//set cookies
@@ -335,7 +386,7 @@ func GithubLogin(c *fiber.Ctx) error {
 	}
 
 	// save state token to redis (for verify vaild)
-	save_state_token_err := redis.CreateStringData(state_token_key, state_token, time.Minute*15)
+	save_state_token_err := redisDB.CreateStringData(state_token_key, state_token, time.Minute*15)
 
 	if save_state_token_err != nil {
 		return c.Status(500).JSON(utils.ErrorMessage("Error saving state token", save_state_token_err))
@@ -357,13 +408,13 @@ func GithubCallBack(c *fiber.Ctx) error {
 	result := strings.Split(state, " ")
 
 	// get state token from redis for verify vaild
-	save_token, redis_error := redis.GetStrigData(result[0])
+	save_token, redis_error := redisDB.GetStrigData(result[0])
 	if redis_error != nil {
 		return c.Status(500).JSON(utils.ErrorMessage("Error get state token", redis_error))
 	}
 
 	// if this function is done than run this (i dont want to run this is the middle because it will take some time)
-	defer redis.DeleteStringData(result[0])
+	defer redisDB.DeleteStringData(result[0])
 
 	//check the states
 	if result[1] != save_token {
@@ -416,9 +467,14 @@ func GithubCallBack(c *fiber.Ctx) error {
 	// get user data from database (verify this user is log in or sign up)
 	get_usre_data, get_user_data_error := userDatabase.GetGithubAccount(user_github_id)
 
+	// btw actually access_token_id not been used in this program (i dont know if i will use it in the future)
+	access_token_id := utils.GenerateTokenId()
+	// generate token id for check the token have been used or not
+	refresh_token_id := utils.GenerateTokenId()
+
 	//generate Jwt token
-	access_token, access_token_err := utils.GenerateJwtToken(user_github_id, "accessToken", access_token_exp.Unix())
-	refresh_token, refresh_token_err := utils.GenerateJwtToken(user_github_id, "refreshToken", refresh_token_exp.Unix())
+	access_token, access_token_err := utils.GenerateJwtToken(user_github_id, "accessToken/"+access_token_id, "accessToken", access_token_exp.Unix())
+	refresh_token, refresh_token_err := utils.GenerateJwtToken(user_github_id, "refreshToken/"+refresh_token_id+" 1", "refreshToken", refresh_token_exp.Unix())
 
 	//handle errors
 	if refresh_token_err != nil {
@@ -428,6 +484,13 @@ func GithubCallBack(c *fiber.Ctx) error {
 	if access_token_err != nil {
 		log.Println("| Path:", c.Path(), "| Data:", user_data, "| Message:", access_token_err)
 		return c.Status(500).JSON(utils.ErrorMessage("Error generating access token", access_token_err))
+	}
+
+	// save refresh token to redis
+	save_refresh_token_err := redisDB.CreateStringData("refreshToken/"+refresh_token_id, refresh_token+" 1", refresh_token_exp_duration)
+
+	if save_refresh_token_err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error saving refresh token token", save_refresh_token_err))
 	}
 
 	//set cookies
@@ -470,41 +533,98 @@ func GithubCallBack(c *fiber.Ctx) error {
 }
 
 func RefreshToken(c *fiber.Ctx) error {
-	var data map[string]string
-
-	err := c.BodyParser(&data)
-
+	// Get the refresh token details from the local
+	// This will be set when through the middleware
 	token := c.Locals("refresh_token_context").(*jwt.Token)
-	refresh_token := token.Raw
-	refresh_token_exist := tokenDatabase.GetRefreshToken(refresh_token)
+
+	// Change token to jwt mapclaims for later access data
+	claims := token.Claims.(jwt.MapClaims)
+
+	// Get the aud from the claims and set it to string
+	// The aud data format is "refrshToken/xxxxxxxxxxx 1"
+	// xxxxxxxx is refresh token id 1 is number of uses since login
+	old_refresh_token_id_unconvert := claims["aud"].(string)
+	// Let the data to ["refrshToken/xxxxxxxxxxx", "1"]
+	old_refresh_token_id := strings.Split(old_refresh_token_id_unconvert, " ")
 	
-	if refresh_token_exist == 0 {
-		return c.Status(401).JSON(utils.ErrorMessage("Token has been used", nil))
+	// Get the data from redis
+	// old_refresh_token_id[0] is "refrshToken/xxxxxxxxxxx"
+	refresh_token_context, redis_error := redisDB.GetStrigData(old_refresh_token_id[0])
+	// refresh_token_context is "eyxxxxx.xxxxxxxxxxxxxxxx.xxxx 1"
+	// "eyxxxxx.xxxxxxxxxxxxxxxx.xxxx" is the refresh token 1 is number of uses since login
+
+	// if cant get the refresh token than the token is invalid
+	if redis_error != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error get refresh_token_redis token", redis_error))
+	}
+
+	// make result to ["eyxxxxx.xxxxxxxxxxxxxxxx.xxxx","1"]
+	result := strings.Split(refresh_token_context, " ")
+
+	// delete old data
+	redisDB.DeleteStringData(old_refresh_token_id[0])
+
+	// if it use two time than send this email is been use
+	// because already delete data so even if refresh token really been hack he just cant use that refresh token anymore
+	if old_refresh_token_id[1] != result[1] {
+		return c.Status(403).JSON(
+			fiber.Map{
+				"status":  "error",
+				"message": "This refresh token has been used",
+			})
+	}
+
+	// add the number of uses since login
+	num, _ := strconv.Atoi(old_refresh_token_id[1])
+	num++
+	new_used_times := strconv.Itoa(num)
+
+	// get usr id
+	usre_id := claims["jti"].(string)
+
+	// generate new access token id
+	access_token_id := utils.GenerateTokenId()
+	
+	access_token, access_token_err := utils.GenerateJwtToken(usre_id, "accessToken/"+access_token_id, "accessToken", access_token_exp.Unix())
+	//old_refresh_token_id[0]+" "+new_used_times will be: "refrshToken/xxxxxxxxxxx y" y is number of uses
+	refresh_token, refresh_token_err := utils.GenerateJwtToken(usre_id, old_refresh_token_id[0]+" "+new_used_times, "refreshToken", refresh_token_exp.Unix())
+
+	//handle errors
+	if refresh_token_err != nil {
+		log.Println("| Path:", c.Path(), "| Data:", claims, "| Message:", refresh_token_err)
+		return c.Status(500).JSON(utils.ErrorMessage("Error generating refresh token", refresh_token_err))
+	}
+	if access_token_err != nil {
+		log.Println("| Path:", c.Path(), "| Data:", claims, "| Message:", access_token_err)
+		return c.Status(500).JSON(utils.ErrorMessage("Error generating access token", access_token_err))
 	}
 	
-	tokenDatabase.CreateRefreshToken(refresh_token)
-	if err != nil {
-		return c.Status(400).JSON(utils.InvalidRequest())
+	// refresh_token+" "+new_used_times will be: "eyxxxxx.xxxxxxxxxxxxxxxx.xxxx y" y is number of uses
+	save_refresh_token_err := redisDB.CreateStringData(old_refresh_token_id[0], refresh_token+" "+new_used_times, refresh_token_exp_duration)
+	
+	if save_refresh_token_err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error saving refresh token token", save_refresh_token_err))
 	}
 
-	if data["email"] == "" {
-		return c.Status(400).JSON(utils.RequestValueRequired("Email address"))
+	//set cookies
+	access_token_cookie := fiber.Cookie{
+		Name:    "accessToken",
+		Value:   access_token,
+		Expires: access_token_exp,
+	}
+	refresh_token_cookie := fiber.Cookie{
+		Name:    "refreshToken",
+		Value:   refresh_token,
+		Expires: refresh_token_exp,
 	}
 
-	if !utils.IsValidEmail(data["email"]) {
-		return c.Status(400).JSON(utils.RequestValueValid("Email address"))
-	}
-
-	// Check if the email is already in the database
-	if userDatabase.CheckUserEmailExist(data["email"]) != 0 {
-		return c.Status(200).JSON(utils.RequestValueInUse("email address"))
-	}
+	c.Cookie(&access_token_cookie)
+	c.Cookie(&refresh_token_cookie)
 
 	return c.Status(200).JSON(
 		fiber.Map{
 			"status":  "success",
-			"message": "This email has not been used yet",
-			"inuse":   false,
+			"message": "Successfully refresh token",
 		})
 }
 

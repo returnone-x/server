@@ -7,6 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// check does the access token is valid
 func VerificationAccessToken() fiber.Handler {
 	return jwtware.New(jwtware.Config{
 		TokenLookup:  "cookie:accessToken",
@@ -16,15 +17,17 @@ func VerificationAccessToken() fiber.Handler {
 	})
 }
 
+// check does the refresh token is valid
 func VerificationRefreshToken() fiber.Handler {
 	return jwtware.New(jwtware.Config{
-		TokenLookup:  "cookie:accessToken",
+		TokenLookup:  "cookie:refreshToken",
 		SigningKey:   jwtware.SigningKey{Key: []byte(os.Getenv("JWT_SECRET"))},
 		ErrorHandler: jwtError,
 		ContextKey: "refresh_token_context",
 	})
 }
 
+// if error when check token is invalid
 func jwtError(c *fiber.Ctx, err error) error {
 	fmt.Println(err.Error())
 	if err.Error() == "Missing or malformed JWT" {

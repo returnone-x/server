@@ -17,7 +17,7 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func GenerateJwtToken(user_id string, Audience string, exp_time int64) (string, error) {
+func GenerateJwtToken(user_id string, Audience string, Subject string, exp_time int64) (string, error) {
 
 	SecretKey := os.Getenv("JWT_SECRET")
 
@@ -26,6 +26,7 @@ func GenerateJwtToken(user_id string, Audience string, exp_time int64) (string, 
 		Audience:  Audience,
 		IssuedAt:  time.Now().Unix(),
 		ExpiresAt: exp_time,
+		Subject: Subject,
 	})
 
 	token, err := claims.SignedString([]byte(SecretKey))
@@ -34,8 +35,6 @@ func GenerateJwtToken(user_id string, Audience string, exp_time int64) (string, 
 }
 
 func VerifyJwtToken(jwt_token *jwt.Token, id string) (bool, error) {
-
-	// SecretKey := os.Getenv("JWT_SECRET")
 
 	claims := jwt_token.Claims.(jwt.MapClaims)
 	jwt_token_user_id := claims["user_id"].(string)
