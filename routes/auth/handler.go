@@ -22,19 +22,6 @@ import (
 	"github.com/pquerna/otp/totp"
 )
 
-// so the process is: (refresh token)
-// login -> save refresh token to redis, the data is:
-// key: refrshToken/xxxxxxxxxxx, value: eyxxxxx.xxxxxxxxxxxxxxxx.xxxx 1
-// refresh token:
-// aud: refrshToken/xxxxxxxxxxx 1
-// refresh token:
-// check is the use times are same
-// change redis:
-// key: refrshToken/xxxxxxxxxxx, value: eyxxxxx.xxxxxxxxxxxxxxxx.xxxx 2
-// change aud:
-// aud: refrshToken/xxxxxxxxxxx 1
-// the refreshToken/xxxxxxxxxxx will always be same
-
 // when this time is exceeded, the token will become invalid. (for access token)
 var access_token_exp = time.Now().Add(time.Minute * 60)
 // when this time is exceeded, the token will become invalid. (for refresh token)
@@ -461,17 +448,24 @@ func RefreshToken(c *fiber.Ctx) error {
 	// Change token to jwt mapclaims for later access data
 	claims := token.Claims.(jwt.MapClaims)
 
+	// get token id from claims
 	token_id := claims["token_id"].(string)
+
+	// this is just for convert type to the int
 	ot := claims["used_time"].(string)
 	old_used_times, _ := strconv.Atoi(ot)
 
+	// get data from database
 	refresh_token_context, err := tokenDatabase.GetTokenData(token_id)
 
+	// if got any error
 	if err != nil {
 		return c.Status(401).JSON(utils.ErrorMessage("Error get refresh token detils", err))
 	}
-	fmt.Println(old_used_times, refresh_token_context.Used_time)
+
+	// check the used times is the same (if not the same this account is been hacked)
 	if old_used_times != refresh_token_context.Used_time {
+		// so delete the token for sure the hacker cant use this session anymore
 		tokenDatabase.DeleteToken(token_id)
 		return c.Status(403).JSON(
 			fiber.Map{
@@ -484,9 +478,10 @@ func RefreshToken(c *fiber.Ctx) error {
 	new_used_times:= old_used_times
 	new_used_times++
 
-	// get usr id
+	// get user id
 	usre_id := claims["user_id"].(string)
 
+	// create new access token and refresh token (also update the refresh token used time)
 	access_token, refresh_token, error_message, err := SetRefreshCookies(usre_id, token_id, new_used_times, c)
 
 	if err != nil {
