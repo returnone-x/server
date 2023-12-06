@@ -36,7 +36,7 @@ import (
 // the refreshToken/xxxxxxxxxxx will always be same
 
 // when this time is exceeded, the token will become invalid. (for access token)
-var access_token_exp = time.Now().Add(time.Minute * 15)
+var access_token_exp = time.Now().Add(time.Minute * 60)
 // when this time is exceeded, the token will become invalid. (for refresh token)
 var refresh_token_exp = time.Now().Add(time.Hour * 24 * 30)
 
@@ -516,7 +516,16 @@ func RefreshToken(c *fiber.Ctx) error {
 }
 
 func CheckAuthorizationa(c *fiber.Ctx) error {
-
+	token := c.Locals("access_token_context").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	fmt.Println(claims["exp"].(float64) - float64(time.Now().Unix()))
+	if claims["exp"].(float64) - float64(time.Now().Unix()) < float64(time.Minute * 20) {
+		return c.Status(200).JSON(
+			fiber.Map{
+				"status":  "success",
+				"message": "The token will be invalid in twenty minutes",
+			})
+	}
 	// cuz middleware has already checked the authorization so dont need to check again
 	return c.Status(200).JSON(
 		fiber.Map{

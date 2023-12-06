@@ -3,8 +3,6 @@ package untils
 import (
 	"os"
 	"strconv"
-	"time"
-
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -30,7 +28,7 @@ func GenerateJwtToken(user_id string, token_id string, used_time int, subject st
 	claims["used_time"] = strconv.Itoa(used_time)
 	claims["token_id"] = token_id
 	claims["subject"] = subject
-	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+	claims["exp"] = exp_time
 	
 	t, err := token.SignedString([]byte(SecretKey))
 
