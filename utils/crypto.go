@@ -1,10 +1,10 @@
 package untils
 
 import (
+	"os"
+	"strconv"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
-	"os"
-	"time"
 )
 
 func HashPassword(password string) (string, error) {
@@ -17,18 +17,28 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func GenerateJwtToken(user_id string, Audience string, exp_time int64) (string, error) {
+func GenerateJwtToken(user_id string, token_id string, used_time int, subject string, exp_time int64) (string, error) {
 
 	SecretKey := os.Getenv("JWT_SECRET")
 
-	claims := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.StandardClaims{
-		Id:        user_id,
-		Audience:  Audience,
-		IssuedAt:  time.Now().Unix(),
-		ExpiresAt: exp_time,
-	})
+	token := jwt.New(jwt.SigningMethodHS512)
+	
+	claims := token.Claims.(jwt.MapClaims)
+	claims["user_id"] = user_id
+	claims["used_time"] = strconv.Itoa(used_time)
+	claims["token_id"] = token_id
+	claims["subject"] = subject
+	claims["exp"] = exp_time
+	
+	t, err := token.SignedString([]byte(SecretKey))
 
-	token, err := claims.SignedString([]byte(SecretKey))
+	return t, err
+}
 
-	return token, err
+func VerifyJwtToken(jwt_token *jwt.Token, id string) (bool, error) {
+
+	claims := jwt_token.Claims.(jwt.MapClaims)
+	jwt_token_user_id := claims["user_id"].(string)
+
+	return jwt_token_user_id == id, nil
 }

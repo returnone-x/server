@@ -1,17 +1,16 @@
 package main
 
 import (
-	"os"
-	"returnone/config"
-	"returnone/routes/auth"
-	"time"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/middleware/encryptcookie"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/utils"
 	"github.com/joho/godotenv"
+	"os"
+	"returnone/config"
+	"returnone/routes/auth"
+	"time"
 )
 
 func main() {
@@ -35,7 +34,7 @@ func main() {
 	app.Use(encryptcookie.New(encryptcookie.Config{
 		Key: os.Getenv("ENCRYPT_COOKIE_SECRET"),
 	}))
-	
+
 	// protection Cross-Site Request Forgery (CSRF) attacks
 	// *when test csrf must change the ENV*
 	if os.Getenv("ENV") == "Production" {
@@ -43,12 +42,11 @@ func main() {
 			KeyLookup:      "header:X-Csrf-Token",
 			CookieName:     "csrf_",
 			CookieSameSite: "Strict",
-			Expiration:     72 * time.Hour,
+			Expiration:     15 * time.Minute,
 			KeyGenerator:   utils.UUID,
 		}))
 	}
 
-	
 	api_v1 := app.Group("/v1")
 
 	// set auth controller

@@ -1,7 +1,7 @@
 # naming convention
 
 - use Snakecase in variable name
-- use Camelcase in paclage name
+- use Camelcase in package name
 - use Pascalcase in function name
 
 ## example
@@ -9,12 +9,12 @@
 ```go
 package simpleTest
 
-function EampleTest() {
+function ExampleTest() {
     variable_test_one := "test_01";
     variable_test_two := "test_02";
 
-    reslut := stringEdit.AddTwoString(variable_test_one, variable_test_two);
+    result := stringEdit.AddTwoString(variable_test_one, variable_test_two);
 
-    return reslut
+    return result
 }
 ```
