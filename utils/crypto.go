@@ -2,7 +2,9 @@ package untils
 
 import (
 	"os"
+	"strconv"
 	"time"
+
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -17,21 +19,22 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func GenerateJwtToken(user_id string, Audience string, Subject string, exp_time int64) (string, error) {
+func GenerateJwtToken(user_id string, token_id string, used_time int, subject string, exp_time int64) (string, error) {
 
 	SecretKey := os.Getenv("JWT_SECRET")
 
-	claims := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.StandardClaims{
-		Id:        user_id,
-		Audience:  Audience,
-		IssuedAt:  time.Now().Unix(),
-		ExpiresAt: exp_time,
-		Subject: Subject,
-	})
+	token := jwt.New(jwt.SigningMethodHS512)
+	
+	claims := token.Claims.(jwt.MapClaims)
+	claims["user_id"] = user_id
+	claims["used_time"] = strconv.Itoa(used_time)
+	claims["token_id"] = token_id
+	claims["subject"] = subject
+	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+	
+	t, err := token.SignedString([]byte(SecretKey))
 
-	token, err := claims.SignedString([]byte(SecretKey))
-
-	return token, err
+	return t, err
 }
 
 func VerifyJwtToken(jwt_token *jwt.Token, id string) (bool, error) {

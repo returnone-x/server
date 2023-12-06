@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func CreateStringData(key string, vaule string, exp time.Duration) error{
+func CreateStringData(key string, vaule string, exp time.Duration) error {
 	ctx := context.Background()
 
 	err := config.Redis.Set(ctx, key, vaule, exp).Err()

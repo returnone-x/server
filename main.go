@@ -42,7 +42,7 @@ func main() {
 			KeyLookup:      "header:X-Csrf-Token",
 			CookieName:     "csrf_",
 			CookieSameSite: "Strict",
-			Expiration:     72 * time.Hour,
+			Expiration:     15 * time.Minute,
 			KeyGenerator:   utils.UUID,
 		}))
 	}
