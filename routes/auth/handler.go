@@ -47,7 +47,7 @@ func SignUp(c *fiber.Ctx) error {
 	}
 
 	if !utils.IsValidUsername(data["user_name"]) {
-		return c.Status(400).JSON(utils.RequestValueValid("user name"))
+		return c.Status(400).JSON(utils.RequestValueValid("username"))
 	}
 
 	if !utils.IsValidEmail(data["email"]) {
@@ -61,7 +61,7 @@ func SignUp(c *fiber.Ctx) error {
 
 	// check the user name has already been used
 	if userDatabase.CheckUserNameExist(data["user_name"]) != 0 {
-		return c.Status(400).JSON(utils.RequestValueInUse("user name"))
+		return c.Status(400).JSON(utils.RequestValueInUse("username"))
 	}
 
 	hash_password, _ := utils.HashPassword(data["password"])
@@ -562,7 +562,7 @@ func EmailExist(c *fiber.Ctx) error {
 func UserNameExist(c *fiber.Ctx) error {
 	var data map[string]string
 	err := c.BodyParser(&data)
-
+	fmt.Println(err)
 	if err != nil {
 		return c.Status(400).JSON(utils.InvalidRequest())
 	}

@@ -11,10 +11,10 @@ func Setup(app fiber.Router) {
 	// email signup
 	app.Post("/signup", SignUp)
 	// email login
-	app.Get("/login", LogIn)
+	app.Post("/login", LogIn)
 	// check does the email or username has been used already
-	app.Get("/emailexist", EmailExist)
-	app.Get("/usernameexist", UserNameExist)
+	app.Post("/emailexist", EmailExist)
+	app.Post("/usernameexist", UserNameExist)
 
 	// oauth2.0 login or register
 	app.Get("/oauth/google", GoogleLogin)

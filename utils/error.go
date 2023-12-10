@@ -42,7 +42,7 @@ func RequestValueInUse(value string) fiber.Map {
 	return fiber.Map{
 		"status": "error",
 		"message": fmt.Sprintf("This %v is already in use", value),
-		"Inuse": true,
+		"inuse": true,
 	}
 }
 

@@ -1,16 +1,18 @@
 package main
 
 import (
+	"os"
+	"returnone/config"
+	"returnone/routes/auth"
+	"time"
+
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/middleware/encryptcookie"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/utils"
 	"github.com/joho/godotenv"
-	"os"
-	"returnone/config"
-	"returnone/routes/auth"
-	"time"
 )
 
 func main() {
@@ -35,6 +37,13 @@ func main() {
 		Key: os.Getenv("ENCRYPT_COOKIE_SECRET"),
 	}))
 
+	// cors middleware setup
+	app.Use(cors.New())
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost:3000, https://returnone.tech",
+		AllowHeaders:  "Origin, Content-Type, Accept",
+	}))
+	
 	// protection Cross-Site Request Forgery (CSRF) attacks
 	// *when test csrf must change the ENV*
 	if os.Getenv("ENV") == "Production" {
