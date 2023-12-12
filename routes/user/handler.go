@@ -1,8 +1,10 @@
 package user
 
 import (
+	"fmt"
 	userDatabase "returnone/database/user"
 	utils "returnone/utils"
+
 	"github.com/gofiber/fiber/v2"
 	jwt "github.com/golang-jwt/jwt/v5"
 )
@@ -44,7 +46,7 @@ func Rename(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(500).JSON(utils.ErrorMessage("When update database got some error", err))
 	}
-
+	fmt.Println(user_id)
 	affected_row, _ := result.RowsAffected()
 
 	if affected_row == 0 {

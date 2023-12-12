@@ -1,13 +1,13 @@
 package untils
 
 import (
-	"net/mail"
 	"regexp"
 )
 
 func IsValidEmail(email string) bool {
-	_, err := mail.ParseAddress(email)
-	return err == nil
+	
+	match, _ := regexp.MatchString("^[a-z0-9._%+-]+@[a-z0-9.-]+.[a-z]$", email)
+	return match
 }
 
 func IsValidUsername(username string) bool {
