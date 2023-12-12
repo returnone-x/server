@@ -5,5 +5,5 @@ import (
 )
 
 func Setup(app fiber.Router) {
-	app.Post("/rename" ,Rename)
+	app.Post("/rename" , Rename)
 }

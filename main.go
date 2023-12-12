@@ -68,6 +68,7 @@ func main() {
 	// set auth middleware(for check does user have right auth)
 	user_group.Use(middleware.VerificationAccessToken())
 	user.Setup(user_group)
+
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Welcome to returnone backend!")
 	})
