@@ -303,6 +303,7 @@ func GoogleCallBack(c *fiber.Ctx) error {
 	}
 	c.Cookie(&access_token_cookie)
 	c.Cookie(&refresh_token_cookie)
+	// for front end to check is this is the sign up if it is than popup a modal to let user change username
 	c.Cookie(&fiber.Cookie{
 		Name:    "first_login",
 		Value:   "1",
@@ -455,6 +456,7 @@ func GithubCallBack(c *fiber.Ctx) error {
 	}
 	c.Cookie(&access_token_cookie)
 	c.Cookie(&refresh_token_cookie)
+	// for front end to check is this is the sign up if it is than popup a modal to let user change username
 	c.Cookie(&fiber.Cookie{
 		Name:    "first_login",
 		Value:   "1",

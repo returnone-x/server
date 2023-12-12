@@ -31,7 +31,6 @@ func GenerateRandomBase64String() (string, error) {
 		return "", err
 	}
 
-	// 將隨機數轉換成Base64編碼的字符串
 	state := base64.URLEncoding.EncodeToString(randomBytes)
 	return state, nil
 }

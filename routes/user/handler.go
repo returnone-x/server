@@ -1,12 +1,10 @@
 package user
 
 import (
-	"fmt"
-	userDatabase "returnone/database/user"
-	utils "returnone/utils"
-
 	"github.com/gofiber/fiber/v2"
 	jwt "github.com/golang-jwt/jwt/v5"
+	userDatabase "returnone/database/user"
+	utils "returnone/utils"
 )
 
 func Rename(c *fiber.Ctx) error {
@@ -39,6 +37,7 @@ func Rename(c *fiber.Ctx) error {
 
 	token := c.Locals("access_token_context").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
+	// get user_id from accessToken cookie
 	user_id := claims["user_id"].(string)
 
 	result, err := userDatabase.Rename(user_id, data["new_username"])
@@ -46,9 +45,9 @@ func Rename(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(500).JSON(utils.ErrorMessage("When update database got some error", err))
 	}
-	fmt.Println(user_id)
-	affected_row, _ := result.RowsAffected()
 
+	affected_row, _ := result.RowsAffected()
+	// if didnt update anything than throw a error
 	if affected_row == 0 {
 		return c.Status(400).JSON(utils.ErrorMessage("We cant find this user in database", err))
 	}
