@@ -3,9 +3,10 @@ package main
 import (
 	"os"
 	"returnone/config"
+	"returnone/middleware"
 	"returnone/routes/auth"
 	"time"
-
+	"returnone/routes/user"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/csrf"
@@ -46,7 +47,7 @@ func main() {
 	
 	// protection Cross-Site Request Forgery (CSRF) attacks
 	// *when test csrf must change the ENV*
-	if os.Getenv("ENV") == "Production" {
+	if os.Getenv("ENV") == "production" {
 		app.Use(csrf.New(csrf.Config{
 			KeyLookup:      "header:X-Csrf-Token",
 			CookieName:     "csrf_",
@@ -56,12 +57,17 @@ func main() {
 		}))
 	}
 
-	api_v1 := app.Group("/v1")
+	api_v1 := app.Group("/api/v1")
 
 	// set auth controller
 	auth_group := api_v1.Group("/auth")
 	auth.Setup(auth_group)
 
+	// set user controller
+	user_group := api_v1.Group("/user")
+	// set auth middleware(for check does user have right auth)
+	user_group.Use(middleware.VerificationAccessToken())
+	user.Setup(user_group)
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Welcome to returnone backend!")
 	})

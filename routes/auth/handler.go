@@ -202,12 +202,12 @@ func GoogleLogin(c *fiber.Ctx) error {
 }
 
 func GoogleCallBack(c *fiber.Ctx) error {
+	fmt.Println("test")
 	// get state from query
 	state := c.Query("state")
 
 	// cuz the state is "xxxx xxxx" this first xxxx is key the second is value
 	result := strings.Split(state, " ")
-
 	// get state token from redis for verify vaild
 	save_token, redis_error := redisDB.GetStrigData(result[0])
 	if redis_error != nil {
@@ -251,7 +251,7 @@ func GoogleCallBack(c *fiber.Ctx) error {
 	}
 
 	// get user data from database (verify this user is log in or sign up)
-	get_usre_data, get_user_data_error := userDatabase.GetGoogleAccount(user_data["id"].(string))
+	_, get_user_data_error := userDatabase.GetGoogleAccount(user_data["id"].(string))
 	
 	access_token, refresh_token, error_message, err := SetLoginCookies(user_data["id"].(string), c)
 
@@ -275,15 +275,11 @@ func GoogleCallBack(c *fiber.Ctx) error {
 	if get_user_data_error == nil {
 		c.Cookie(&access_token_cookie)
 		c.Cookie(&refresh_token_cookie)
-		return c.Status(200).JSON(fiber.Map{
-			"status":  "success",
-			"message": "Account successfully login",
-			"data":    get_usre_data,
-		})
+		return c.Status(200).Redirect(config.WebsiteUrl() + "/logincomplete")
 	}
 
 	// if this user didn't sign up than create user data
-	save_data, save_data_err := userDatabase.CreateUserWithGoogleLogin(user_data["id"].(string), user_data["picture"].(string))
+	_, save_data_err := userDatabase.CreateUserWithGoogleLogin(user_data["id"].(string), user_data["picture"].(string))
 	if save_data_err != nil {
 		log.Println("| Path:", c.Path(), "| Data:", user_data, "| Message:", save_data_err)
 		return c.Status(500).JSON(utils.ErrorMessage("Error creating user", save_data_err))
@@ -292,11 +288,7 @@ func GoogleCallBack(c *fiber.Ctx) error {
 	c.Cookie(&access_token_cookie)
 	c.Cookie(&refresh_token_cookie)
 
-	return c.Status(200).JSON(fiber.Map{
-		"status":  "success",
-		"message": "Account successfully signup",
-		"data":    save_data,
-	})
+	return c.Status(200).Redirect(config.WebsiteUrl() + "/logincomplete")
 }
 
 func GithubLogin(c *fiber.Ctx) error {
@@ -392,7 +384,7 @@ func GithubCallBack(c *fiber.Ctx) error {
 	user_github_id := fmt.Sprintf("%f", user_data["id"])
 
 	// get user data from database (verify this user is log in or sign up)
-	get_usre_data, get_user_data_error := userDatabase.GetGithubAccount(user_github_id)
+	_, get_user_data_error := userDatabase.GetGithubAccount(user_github_id)
 
 	// get user data from database (verify this user is log in or sign up)	
 	access_token, refresh_token, error_message, err := SetLoginCookies(user_github_id, c)
@@ -416,15 +408,11 @@ func GithubCallBack(c *fiber.Ctx) error {
 	if get_user_data_error == nil {
 		c.Cookie(&access_token_cookie)
 		c.Cookie(&refresh_token_cookie)
-		return c.Status(200).JSON(fiber.Map{
-			"status":  "success",
-			"message": "Account successfully login",
-			"data":    get_usre_data,
-		})
+		return c.Status(200).Redirect(config.WebsiteUrl() + "/logincomplete")
 	}
 
 	// if this user didn't sign up than create user data
-	save_data, save_data_err := userDatabase.CreateUserWithGithubLogin(user_github_id, user_data["avatar_url"].(string))
+	_, save_data_err := userDatabase.CreateUserWithGithubLogin(user_github_id, user_data["avatar_url"].(string))
 	if save_data_err != nil {
 		log.Println("| Path:", c.Path(), "| Data:", user_data, "| Message:", save_data_err)
 		return c.Status(500).JSON(utils.ErrorMessage("Error creating user", save_data_err))
@@ -433,11 +421,7 @@ func GithubCallBack(c *fiber.Ctx) error {
 	c.Cookie(&access_token_cookie)
 	c.Cookie(&refresh_token_cookie)
 
-	return c.Status(200).JSON(fiber.Map{
-		"status":  "success",
-		"message": "Account successfully signup",
-		"data":    save_data,
-	})
+	return c.Status(200).Redirect(config.WebsiteUrl() + "/logincomplete")
 }
 
 func RefreshToken(c *fiber.Ctx) error {
