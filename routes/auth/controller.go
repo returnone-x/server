@@ -25,6 +25,9 @@ func Setup(app fiber.Router) {
 	//check user authorizationa
 	app.Get("/authorizationa", middleware.VerificationAccessToken(),CheckAuthorizationa)
 
+	// log out
+	app.Get("/logout", middleware.VerificationRefreshToken(),LogOut)
+
 	// for refresh access token
 	app.Get("/refresh", middleware.VerificationRefreshToken(),RefreshToken)
 }

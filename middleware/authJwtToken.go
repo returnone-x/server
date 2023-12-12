@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"os"
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
@@ -13,7 +12,7 @@ func VerificationAccessToken() fiber.Handler {
 		TokenLookup:  "cookie:accessToken",
 		SigningKey:   jwtware.SigningKey{Key: []byte(os.Getenv("JWT_SECRET"))},
 		ErrorHandler: jwtError,
-		ContextKey: "access_token_context",
+		ContextKey:   "access_token_context",
 	})
 }
 
@@ -23,13 +22,12 @@ func VerificationRefreshToken() fiber.Handler {
 		TokenLookup:  "cookie:refreshToken",
 		SigningKey:   jwtware.SigningKey{Key: []byte(os.Getenv("JWT_SECRET"))},
 		ErrorHandler: jwtError,
-		ContextKey: "refresh_token_context",
+		ContextKey:   "refresh_token_context",
 	})
 }
 
 // if error when check token is invalid
 func jwtError(c *fiber.Ctx, err error) error {
-	fmt.Println(err.Error())
 	if err.Error() == "Missing or malformed JWT" {
 		return c.Status(fiber.StatusBadRequest).
 			JSON(fiber.Map{"status": "error", "message": "Missing or malformed JWT", "data": nil})
