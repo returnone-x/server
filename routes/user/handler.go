@@ -2,12 +2,10 @@ package user
 
 import (
 	"database/sql"
-	"fmt"
-	userDatabase "returnone/database/user"
-	utils "returnone/utils"
-
 	"github.com/gofiber/fiber/v2"
 	jwt "github.com/golang-jwt/jwt/v5"
+	userDatabase "returnone/database/user"
+	utils "returnone/utils"
 )
 
 func Rename(c *fiber.Ctx) error {
@@ -68,7 +66,7 @@ func GetAvatar(c *fiber.Ctx) error {
 	user_id := claims["user_id"].(string)
 
 	avatar, err := userDatabase.GetUserAvatar(user_id)
-	fmt.Println(user_id)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return c.Status(401).JSON(utils.ErrorMessage("Can't find this user's avatar", err))
