@@ -19,7 +19,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	jwt "github.com/golang-jwt/jwt/v5"
-	"github.com/pquerna/otp/totp"
 )
 
 // when this time is exceeded, the token will become invalid. (for access token)
@@ -142,17 +141,18 @@ func LogIn(c *fiber.Ctx) error {
 		return c.Status(500).JSON(utils.ErrorMessage(error_message, err))
 	}
 
-	if user_data.Default_2fa == 3 {
-		if data["otp"] == "" {
-			return c.Status(403).JSON(utils.ErrorMessage("OTP is required", nil))
-		}
+	// just for now this is no need(2023/12/13)
+	// if user_data.Default_2fa == 3 {
+	// 	if data["otp"] == "" {
+	// 		return c.Status(403).JSON(utils.ErrorMessage("OTP is required", nil))
+	// 	}
 
-		valid := totp.Validate(data["otp"], user_data.Totp)
+	// 	valid := totp.Validate(data["otp"], user_data.Totp)
 
-		if !valid {
-			return c.Status(403).JSON(utils.ErrorMessage("OTP is not valid", nil))
-		}
-	}
+	// 	if !valid {
+	// 		return c.Status(403).JSON(utils.ErrorMessage("OTP is not valid", nil))
+	// 	}
+	// }
 	//set cookies
 	access_token_cookie := fiber.Cookie{
 		Name:    "accessToken",
