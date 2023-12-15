@@ -91,8 +91,8 @@ func SignUp(c *fiber.Ctx) error {
 		Value:   refresh_token,
 		Expires: refresh_token_exp,
 	}
-	c.Cookie(&access_token_cookie)
 	c.Cookie(&refresh_token_cookie)
+	c.Cookie(&access_token_cookie)
 
 	return c.Status(200).JSON(
 		fiber.Map{
@@ -164,8 +164,8 @@ func LogIn(c *fiber.Ctx) error {
 		Value:   refresh_token,
 		Expires: refresh_token_exp,
 	}
-	c.Cookie(&access_token_cookie)
 	c.Cookie(&refresh_token_cookie)
+	c.Cookie(&access_token_cookie)
 
 	return c.Status(200).JSON(fiber.Map{
 		"status":  "success",
@@ -273,8 +273,8 @@ func GoogleCallBack(c *fiber.Ctx) error {
 			Value:   refresh_token,
 			Expires: refresh_token_exp,
 		}
-		c.Cookie(&access_token_cookie)
 		c.Cookie(&refresh_token_cookie)
+		c.Cookie(&access_token_cookie)
 		return c.Status(200).Redirect(config.WebsiteUrl() + "/logincomplete")
 	}
 
@@ -301,8 +301,9 @@ func GoogleCallBack(c *fiber.Ctx) error {
 		Value:   refresh_token,
 		Expires: refresh_token_exp,
 	}
-	c.Cookie(&access_token_cookie)
+	
 	c.Cookie(&refresh_token_cookie)
+	c.Cookie(&access_token_cookie)
 	// for front end to check is this is the sign up if it is than popup a modal to let user change username
 	c.Cookie(&fiber.Cookie{
 		Name:    "first_login",
@@ -428,8 +429,8 @@ func GithubCallBack(c *fiber.Ctx) error {
 			Value:   refresh_token,
 			Expires: refresh_token_exp,
 		}
-		c.Cookie(&access_token_cookie)
 		c.Cookie(&refresh_token_cookie)
+		c.Cookie(&access_token_cookie)
 		return c.Status(200).Redirect(config.WebsiteUrl() + "/logincomplete")
 	}
 
@@ -454,8 +455,8 @@ func GithubCallBack(c *fiber.Ctx) error {
 		Value:   refresh_token,
 		Expires: refresh_token_exp,
 	}
-	c.Cookie(&access_token_cookie)
 	c.Cookie(&refresh_token_cookie)
+	c.Cookie(&access_token_cookie)
 	// for front end to check is this is the sign up if it is than popup a modal to let user change username
 	c.Cookie(&fiber.Cookie{
 		Name:    "first_login",
@@ -467,8 +468,8 @@ func GithubCallBack(c *fiber.Ctx) error {
 		return c.Status(500).JSON(utils.ErrorMessage("Error creating user", save_data_err))
 	}
 
-	c.Cookie(&access_token_cookie)
 	c.Cookie(&refresh_token_cookie)
+	c.Cookie(&access_token_cookie)
 
 	return c.Status(200).Redirect(config.WebsiteUrl() + "/logincomplete")
 }
@@ -533,8 +534,8 @@ func RefreshToken(c *fiber.Ctx) error {
 		Expires: refresh_token_exp,
 	}
 
-	c.Cookie(&access_token_cookie)
 	c.Cookie(&refresh_token_cookie)
+	c.Cookie(&access_token_cookie)
 
 	return c.Status(200).JSON(
 		fiber.Map{
