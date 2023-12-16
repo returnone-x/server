@@ -2,7 +2,7 @@ package tokenDatabase
 
 import (
 	"database/sql"
-	db "returnone/config"
+	db "github.com/returnone-x/server/config"
 	"time"
 )
 

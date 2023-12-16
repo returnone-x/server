@@ -1,7 +1,7 @@
 package userDatabase
 
 import (
-	"returnone/config"
+	"github.com/returnone-x/server/config"
 )
 
 func CheckUserEmailExist(email string) int {

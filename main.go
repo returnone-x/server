@@ -2,11 +2,11 @@ package main
 
 import (
 	"os"
-	"returnone/config"
-	"returnone/middleware"
-	"returnone/routes/auth"
+	"github.com/returnone-x/server/config"
+	"github.com/returnone-x/server/middleware"
+	"github.com/returnone-x/server/routes/auth"
 	"time"
-	"returnone/routes/user"
+	"github.com/returnone-x/server/routes/user"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/csrf"

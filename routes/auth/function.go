@@ -2,8 +2,8 @@ package auth
 
 import (
 	"log"
-	tokenDatabase "returnone/database/tokens"
-	utils "returnone/utils"
+	tokenDatabase "github.com/returnone-x/server/database/tokens"
+	utils "github.com/returnone-x/server/utils"
 
 	"github.com/gofiber/fiber/v2"
 )

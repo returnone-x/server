@@ -2,7 +2,7 @@ package userDatabase
 
 import (
 	"database/sql"
-	db "returnone/config"
+	db "github.com/returnone-x/server/config"
 )
 
 func Rename(id string, new_name string) (sql.Result, error) {

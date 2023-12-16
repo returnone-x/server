@@ -2,7 +2,7 @@ package redisDB
 
 import (
 	"context"
-	"returnone/config"
+	"github.com/returnone-x/server/config"
 )
 
 func GetStrigData(key string) (string, error){

@@ -2,7 +2,7 @@ package redisDB
 
 import (
 	"context"
-	"returnone/config"
+	"github.com/returnone-x/server/config"
 )
 
 func DeleteStringData(key string) (int64, error){

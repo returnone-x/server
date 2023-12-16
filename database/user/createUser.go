@@ -2,9 +2,9 @@ package userDatabase
 
 import (
 	"fmt"
-	"returnone/config"
-	"returnone/models/user"
-	utils "returnone/utils"
+	"github.com/returnone-x/server/config"
+	"github.com/returnone-x/server/models/user"
+	utils "github.com/returnone-x/server/utils"
 	"time"
 )
 

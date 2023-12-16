@@ -1,8 +1,8 @@
 package tokenDatabase
 
 import (
-	db "returnone/config"
-	"returnone/models/key"
+	db "github.com/returnone-x/server/config"
+	"github.com/returnone-x/server/models/key"
 )
 
 func GetTokenData(id string) (token_data keyModles.TokenType, err error) {

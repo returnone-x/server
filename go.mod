@@ -1,4 +1,4 @@
-module returnone
+module github.com/returnone-x/server
 
 go 1.21.4
 

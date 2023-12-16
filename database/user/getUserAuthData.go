@@ -1,7 +1,7 @@
 package userDatabase
 
 import (
-	db "returnone/config"
+	db "github.com/returnone-x/server/config"
 )
 
 type UserAuthData struct {

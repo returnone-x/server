@@ -1,6 +1,6 @@
 package userDatabase
 
-import db "returnone/config"
+import db "github.com/returnone-x/server/config"
 
 func GetUserAvatar(id string) (string, error) {
 

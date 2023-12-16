@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"returnone/middleware"
+	"github.com/returnone-x/server/middleware"
 
 	"github.com/gofiber/fiber/v2"
 )

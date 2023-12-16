@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"github.com/gofiber/fiber/v2"
 	jwt "github.com/golang-jwt/jwt/v5"
-	userDatabase "returnone/database/user"
-	utils "returnone/utils"
+	userDatabase "github.com/returnone-x/server/database/user"
+	utils "github.com/returnone-x/server/utils"
 )
 
 func Rename(c *fiber.Ctx) error {
