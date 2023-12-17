@@ -17,7 +17,7 @@ func Rename(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(
 			fiber.Map{
-				"status":  "success",
+				"status":  "error",
 				"message": "Invalid post request",
 			})
 	}

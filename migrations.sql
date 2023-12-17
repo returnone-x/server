@@ -33,9 +33,9 @@ CREATE TABLE questions (
     "id" varchar(50) PRIMARY KEY NOT NULL,
     questioner_id varchar(50) NOT NULL,
     title varchar(255) NOT NULL,
-    tag jsonb [] NOT NULL,
+    tags jsonb [] NOT NULL,
     content text NOT NULL,
-    view integer NOT NULL,
+    views integer NOT NULL,
     create_at timestamp NOT NULL,
     update_at timestamp NOT NULL,
     CONSTRAINT questions_user_id_FK_1 FOREIGN KEY (questioner_id) REFERENCES users ("id")
