@@ -203,7 +203,6 @@ func GoogleLogin(c *fiber.Ctx) error {
 }
 
 func GoogleCallBack(c *fiber.Ctx) error {
-	fmt.Println("test")
 	// get state from query
 	state := c.Query("state")
 
@@ -631,7 +630,6 @@ func EmailExist(c *fiber.Ctx) error {
 func UserNameExist(c *fiber.Ctx) error {
 	var data map[string]string
 	err := c.BodyParser(&data)
-	fmt.Println(err)
 	if err != nil {
 		return c.Status(400).JSON(utils.InvalidRequest())
 	}
