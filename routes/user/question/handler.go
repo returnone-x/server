@@ -1,19 +1,17 @@
 package question
 
 import (
-	"fmt"
-
 	"github.com/gofiber/fiber/v2"
 	jwt "github.com/golang-jwt/jwt/v5"
 	questionDatabase "github.com/returnone-x/server/database/question"
-	questionModal "github.com/returnone-x/server/models/question"
 	utils "github.com/returnone-x/server/utils"
 )
 
 type RequestBody struct {
-	Title   string                   `json:"title"`
-	Content string                   `json:"content"`
-	Tags    []questionModal.TagsInfo `json:"tags"`
+	Title        string   `json:"title"`
+	Content      string   `json:"content"`
+	Tags_name    []string `json:"tags_name"`
+	Tags_version []string `json:"tags_version"`
 }
 
 func NewPost(c *fiber.Ctx) error {
@@ -37,20 +35,18 @@ func NewPost(c *fiber.Ctx) error {
 		return c.Status(400).JSON(utils.RequestValueValid("question content"))
 	}
 
-	if len(data.Tags) == 0 || len(data.Tags) > 5 {
+	if len(data.Tags_name) == 0 || len(data.Tags_name) > 5 {
 		return c.Status(400).JSON(utils.RequestValueValid("question tags"))
 	}
-
-	fmt.Println(data.Tags)
 
 	// check if tags name repeat
 	seen := make(map[string]struct{})
 
-	for _, tag := range data.Tags {
-		if _, exists := seen[tag.Tag]; exists {
+	for _, tag := range data.Tags_name {
+		if _, exists := seen[tag]; exists {
 			return c.Status(400).JSON(utils.RequestValueValid("question tags"))
 		}
-		seen[tag.Tag] = struct{}{}
+		seen[tag] = struct{}{}
 	}
 
 	token := c.Locals("access_token_context").(*jwt.Token)
@@ -58,8 +54,8 @@ func NewPost(c *fiber.Ctx) error {
 	// get user_id from accessToken cookie
 	user_id := claims["user_id"].(string)
 
-	result, err := questionDatabase.NewQuestion(user_id, data.Title, data.Content, data.Tags)
-	fmt.Println(err)
+	result, err := questionDatabase.NewQuestion(user_id, data.Title, data.Content, data.Tags_name, data.Tags_version)
+
 	if err != nil {
 		return c.Status(500).JSON(utils.ErrorMessage("When create data got some error", err))
 	}

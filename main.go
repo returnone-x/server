@@ -2,11 +2,8 @@ package main
 
 import (
 	"os"
-	"github.com/returnone-x/server/config"
-	"github.com/returnone-x/server/middleware"
-	"github.com/returnone-x/server/routes/auth"
 	"time"
-	"github.com/returnone-x/server/routes/user"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/csrf"
@@ -14,6 +11,11 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/utils"
 	"github.com/joho/godotenv"
+	"github.com/returnone-x/server/config"
+	"github.com/returnone-x/server/middleware"
+	"github.com/returnone-x/server/routes/auth"
+	"github.com/returnone-x/server/routes/public"
+	"github.com/returnone-x/server/routes/user"
 )
 
 func main() {
@@ -62,6 +64,10 @@ func main() {
 	// set auth controller
 	auth_group := api_v1.Group("/auth")
 	auth.Setup(auth_group)
+
+	// set public controller(most for get public resource)
+	public_group := api_v1.Group("/public")
+	public.Setup(public_group)
 
 	// set user controller
 	user_group := api_v1.Group("/user")

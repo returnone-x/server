@@ -7,7 +7,8 @@ type QuestionModal struct {
 	Questioner_id string    `json:"Questioner_id"`
 	Title         string    `json:"title"`
 	Content       string    `json:"content"`
-	Tags          []TagsInfo  `json:"tags"`
+	Tags_name     []string  `json:"tags"`
+	Tags_version  []string  `json:"tags_version"`
 	Views         int       `json:"views"`
 	Create_at     time.Time `json:"create_at"`
 	Update_at     time.Time `json:"update_at"`

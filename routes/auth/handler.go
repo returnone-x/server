@@ -22,7 +22,7 @@ import (
 )
 
 // when this time is exceeded, the token will become invalid. (for access token)
-var access_token_exp = time.Now().Add(time.Minute * 60)
+var access_token_exp = time.Now().Add(time.Hour)
 
 // when this time is exceeded, the token will become invalid. (for refresh token)
 var refresh_token_exp = time.Now().Add(time.Hour * 24 * 30)
