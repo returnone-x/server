@@ -16,16 +16,16 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
 	"github.com/gofiber/fiber/v2"
 	jwt "github.com/golang-jwt/jwt/v5"
 )
 
-// when this time is exceeded, the token will become invalid. (for access token)
-var access_token_exp = time.Now().Add(time.Hour)
-
-// when this time is exceeded, the token will become invalid. (for refresh token)
-var refresh_token_exp = time.Now().Add(time.Hour * 24 * 30)
+func generateAccessTokenExp() time.Time {
+	return time.Now().Add(time.Minute * 60)
+}
+func generateRefreshTokenExp() time.Time {
+	return time.Now().Add(time.Hour * 24 * 30)
+}
 
 func SignUp(c *fiber.Ctx) error {
 	var data map[string]string
@@ -84,12 +84,14 @@ func SignUp(c *fiber.Ctx) error {
 	access_token_cookie := fiber.Cookie{
 		Name:    "accessToken",
 		Value:   access_token,
-		Expires: access_token_exp,
+		Expires: generateAccessTokenExp(),
+		HTTPOnly: true,
 	}
 	refresh_token_cookie := fiber.Cookie{
 		Name:    "refreshToken",
 		Value:   refresh_token,
-		Expires: refresh_token_exp,
+		Expires: generateRefreshTokenExp(),
+		HTTPOnly: true,
 	}
 	c.Cookie(&refresh_token_cookie)
 	c.Cookie(&access_token_cookie)
@@ -157,12 +159,14 @@ func LogIn(c *fiber.Ctx) error {
 	access_token_cookie := fiber.Cookie{
 		Name:    "accessToken",
 		Value:   access_token,
-		Expires: access_token_exp,
+		Expires: generateAccessTokenExp(),
+		HTTPOnly: true,
 	}
 	refresh_token_cookie := fiber.Cookie{
 		Name:    "refreshToken",
 		Value:   refresh_token,
-		Expires: refresh_token_exp,
+		Expires: generateRefreshTokenExp(),
+		HTTPOnly: true,
 	}
 	c.Cookie(&refresh_token_cookie)
 	c.Cookie(&access_token_cookie)
@@ -265,12 +269,14 @@ func GoogleCallBack(c *fiber.Ctx) error {
 		access_token_cookie := fiber.Cookie{
 			Name:    "accessToken",
 			Value:   access_token,
-			Expires: access_token_exp,
+			Expires: generateAccessTokenExp(),
+			HTTPOnly: true,
 		}
 		refresh_token_cookie := fiber.Cookie{
 			Name:    "refreshToken",
 			Value:   refresh_token,
-			Expires: refresh_token_exp,
+			Expires: generateRefreshTokenExp(),
+			HTTPOnly: true,
 		}
 		c.Cookie(&refresh_token_cookie)
 		c.Cookie(&access_token_cookie)
@@ -293,12 +299,14 @@ func GoogleCallBack(c *fiber.Ctx) error {
 	access_token_cookie := fiber.Cookie{
 		Name:    "accessToken",
 		Value:   access_token,
-		Expires: access_token_exp,
+		Expires: generateAccessTokenExp(),
+		HTTPOnly: true,
 	}
 	refresh_token_cookie := fiber.Cookie{
 		Name:    "refreshToken",
 		Value:   refresh_token,
-		Expires: refresh_token_exp,
+		Expires: generateRefreshTokenExp(),
+		HTTPOnly: true,
 	}
 	
 	c.Cookie(&refresh_token_cookie)
@@ -421,12 +429,14 @@ func GithubCallBack(c *fiber.Ctx) error {
 		access_token_cookie := fiber.Cookie{
 			Name:    "accessToken",
 			Value:   access_token,
-			Expires: access_token_exp,
+			Expires: generateAccessTokenExp(),
+			HTTPOnly: true,
 		}
 		refresh_token_cookie := fiber.Cookie{
 			Name:    "refreshToken",
 			Value:   refresh_token,
-			Expires: refresh_token_exp,
+			Expires: generateRefreshTokenExp(),
+			HTTPOnly: true,
 		}
 		c.Cookie(&refresh_token_cookie)
 		c.Cookie(&access_token_cookie)
@@ -447,12 +457,14 @@ func GithubCallBack(c *fiber.Ctx) error {
 	access_token_cookie := fiber.Cookie{
 		Name:    "accessToken",
 		Value:   access_token,
-		Expires: access_token_exp,
+		Expires: generateAccessTokenExp(),
+		HTTPOnly: true,
 	}
 	refresh_token_cookie := fiber.Cookie{
 		Name:    "refreshToken",
 		Value:   refresh_token,
-		Expires: refresh_token_exp,
+		Expires: generateRefreshTokenExp(),
+		HTTPOnly: true,
 	}
 	c.Cookie(&refresh_token_cookie)
 	c.Cookie(&access_token_cookie)
@@ -525,12 +537,14 @@ func RefreshToken(c *fiber.Ctx) error {
 	access_token_cookie := fiber.Cookie{
 		Name:    "accessToken",
 		Value:   access_token,
-		Expires: access_token_exp,
+		Expires: generateAccessTokenExp(),
+		HTTPOnly: true,
 	}
 	refresh_token_cookie := fiber.Cookie{
 		Name:    "refreshToken",
 		Value:   refresh_token,
-		Expires: refresh_token_exp,
+		Expires: generateRefreshTokenExp(),
+		HTTPOnly: true,
 	}
 
 	c.Cookie(&refresh_token_cookie)
@@ -582,11 +596,11 @@ func LogOut(c *fiber.Ctx) error {
 func CheckAuthorizationa(c *fiber.Ctx) error {
 	token := c.Locals("access_token_context").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	if claims["exp"].(float64)-float64(time.Now().Unix()) < float64(time.Minute*20) {
+	if claims["exp"].(float64)-float64(time.Now().Unix()) < 60 * 20 {
 		return c.Status(200).JSON(
 			fiber.Map{
 				"status":  "success",
-				"message": "The token will be invalid in twenty minutes",
+				"message": "The token will expire in the near future",
 			})
 	}
 	// cuz middleware has already checked the authorization so dont need to check again

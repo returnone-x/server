@@ -60,11 +60,10 @@ func Rename(c *fiber.Ctx) error {
 }
 
 func GetAvatar(c *fiber.Ctx) error {
-	token := c.Locals("access_token_context").(*jwt.Token)
+	token := c.Locals("refresh_token_context").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	// get user_id from accessToken cookie
-	user_id := claims["user_id"].(string)
 
+	user_id := claims["user_id"].(string)
 	avatar, err := userDatabase.GetUserAvatar(user_id)
 
 	if err != nil {

@@ -21,7 +21,7 @@ func GenerateJwtToken(user_id string, token_id string, used_time int, subject st
 
 	SecretKey := os.Getenv("JWT_SECRET")
 
-	token := jwt.New(jwt.SigningMethodHS512)
+	token := jwt.New(jwt.SigningMethodHS256)
 	
 	claims := token.Claims.(jwt.MapClaims)
 	claims["user_id"] = user_id
