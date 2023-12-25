@@ -61,7 +61,20 @@ func NewPost(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(fiber.Map{
-		"status": "success",
-		"data":   result,
+		"status":  "success",
+		"message": "Successful post a new question",
+		"data":    result,
 	})
+}
+
+func UpVote(c *fiber.Ctx) error {
+	// vote 1 = up vote
+	// use function from function.go
+	return Vote(c, 1)
+}
+
+func DownVote(c *fiber.Ctx) error {
+	// vote 2 = donw vote
+	// use function from function.go
+	return Vote(c, 2)
 }

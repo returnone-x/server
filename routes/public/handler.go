@@ -18,9 +18,9 @@ func GetQuestion(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return c.Status(401).JSON(utils.ErrorMessage("Can't find this user's avatar", err))
+			return c.Status(400).JSON(utils.ErrorMessage("Can't find this question", err))
 		} else {
-			return c.Status(500).JSON(utils.ErrorMessage("Error when get user's avatar from database", err))
+			return c.Status(500).JSON(utils.ErrorMessage("Error when get question from database", err))
 		}
 	}
 

@@ -43,3 +43,10 @@ CREATE TABLE questions (
 );
 
 CREATE INDEX questions_user_id_FK_1 ON questions (questioner_id);
+
+CREATE TABLE question_votes (
+    "question_id" varchar(50) PRIMARY KEY NOT NULL,
+    voter_id varchar(50) NOT NULL,
+    vote integer NOT NULL,
+    CONSTRAINT question_votes_id_FK_1 FOREIGN KEY (question_id) REFERENCES questions ("id")
+);
