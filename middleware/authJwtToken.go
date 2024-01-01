@@ -1,9 +1,10 @@
 package middleware
 
 import (
+	"os"
+
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
-	"os"
 )
 
 func VerificationAccessToken() fiber.Handler {
@@ -34,11 +35,7 @@ func VerificationAccessTokenWithoutError() fiber.Handler {
 }
 
 func jwtNext(c *fiber.Ctx, err error) error {
-	if err.Error() == "Missing or malformed JWT" {
-		return c.Next()
-	}
-	return c.Status(fiber.StatusUnauthorized).
-		JSON(fiber.Map{"status": "error", "message": "Invalid JWT", "data": nil})
+	return c.Next()
 }
 
 func jwtError(c *fiber.Ctx, err error) error {

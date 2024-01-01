@@ -90,17 +90,17 @@ CREATE INDEX IF NOT EXISTS question_comment_votes_FK_1 ON question_comment_votes
 
 CREATE TABLE IF NOT EXISTS question_answers (
     "id" varchar(50) PRIMARY KEY NOT NULL,
-    "qusetion_id" varchar(50) NOT NULL,
+    "question_id" varchar(50) NOT NULL,
     "user_id" varchar(50) NOT NULL,
     "content" text NOT NULL,
     "create_at" timestamp NOT NULL,
     "update_at" timestamp NOT NULL,
-    CONSTRAINT question_answers_FK_1 FOREIGN KEY ("qusetion_id") REFERENCES questions ("id"),
+    CONSTRAINT question_answers_FK_1 FOREIGN KEY ("question_id") REFERENCES questions ("id"),
     CONSTRAINT question_answers_FK_2 FOREIGN KEY ("user_id") REFERENCES users ("id")
 );
 
 -- cus need user question_id to get all question_anwsers
-CREATE INDEX IF NOT EXISTS question_answers_FK_1 ON question_answers ("qusetion_id");
+CREATE INDEX IF NOT EXISTS question_answers_FK_1 ON question_answers ("question_id");
 
 CREATE TABLE IF NOT EXISTS question_answer_votes (
     "answer_id" varchar(50) NOT NULL,

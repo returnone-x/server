@@ -2,14 +2,14 @@ package public
 
 import (
 	"database/sql"
-	"strconv"
-
 	"github.com/gofiber/fiber/v2"
 	jwt "github.com/golang-jwt/jwt/v5"
 	questionDatabase "github.com/returnone-x/server/database/question"
+	questionAnswerDatabase "github.com/returnone-x/server/database/question/answer"
 	questionCommentDatabase "github.com/returnone-x/server/database/question/comment"
 	questionModal "github.com/returnone-x/server/models/question"
 	utils "github.com/returnone-x/server/utils"
+	"strconv"
 )
 
 func GetQuestion(c *fiber.Ctx) error {
@@ -75,6 +75,12 @@ func GetQuestion(c *fiber.Ctx) error {
 		return c.Status(500).JSON(utils.ErrorMessage("Error get data", err))
 	}
 
+	question_answer_result, err := questionAnswerDatabase.GetQuestionAnswer(params["id"])
+	
+	if err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error get data", err))
+	}
+
 	return_result := questionModal.ReturnResult{
 		Id:            question_data.Id,
 		Questioner_id: question_data.Questioner_id,
@@ -85,6 +91,7 @@ func GetQuestion(c *fiber.Ctx) error {
 		Views:         question_data.Views,
 		Vote_count:    vote_count,
 		User_vote:     user_vote_result.Vote,
+		Answers:       question_answer_result,
 		Create_at:     question_data.Create_at,
 		Update_at:     question_data.Update_at,
 	}
@@ -121,7 +128,7 @@ func GetQuestionComment(c *fiber.Ctx) error {
 
 	return c.Status(200).JSON(fiber.Map{
 		"status":  "success",
-		"message": "successful create new comment data",
+		"message": "successful get comment data",
 		"data":    result,
 	})
 }

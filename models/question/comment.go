@@ -10,5 +10,6 @@ type QuestionCommentModal struct {
 	Reply        string    `json:"reply"`
 	Update_at    time.Time `json:"update_at"`
 	Create_at    time.Time `json:"create_at"`
-	Avatar       string `json:"avatar"`   
+	User_id      string    `json:"user_id"`
+	Avatar       string    `json:"avatar"`
 }

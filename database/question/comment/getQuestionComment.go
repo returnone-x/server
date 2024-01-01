@@ -8,7 +8,7 @@ import (
 func GetQuestionComments(question_id string, limit int) ([]questionModal.QuestionCommentModal, error) {
 	
 	sqlString := `
-	SELECT qc.id, qc.question_id, qc.commenter_id, qc.content, qc.reply, qc.create_at, qc.update_at, u.avatar
+	SELECT qc.id, qc.question_id, qc.commenter_id, qc.content, qc.reply, qc.create_at, qc.update_at, u.avatar, u.id
 	FROM question_comments qc
 	JOIN users u ON qc.commenter_id = u.id
 	WHERE qc.question_id = $1
@@ -37,6 +37,7 @@ func GetQuestionComments(question_id string, limit int) ([]questionModal.Questio
 			&comment.Reply,
 			&comment.Create_at,
 			&comment.Update_at,
+			&comment.User_id,
 			&comment.Avatar,
 		)
 		if err != nil {
