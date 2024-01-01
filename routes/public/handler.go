@@ -75,8 +75,8 @@ func GetQuestion(c *fiber.Ctx) error {
 		return c.Status(500).JSON(utils.ErrorMessage("Error get data", err))
 	}
 
-	question_answer_result, err := questionAnswerDatabase.GetQuestionAnswer(params["id"])
-	
+	question_answer_result, err := questionAnswerDatabase.GetQuestionAnswer(params["id"], user_id)
+
 	if err != nil {
 		return c.Status(500).JSON(utils.ErrorMessage("Error get data", err))
 	}

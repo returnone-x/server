@@ -4,7 +4,6 @@ import (
 	db "github.com/returnone-x/server/config"
 )
 
-
 func GetQuestionVoteCount(question_id string, vote_value int) (int, error) {
 	var voteCount int
 

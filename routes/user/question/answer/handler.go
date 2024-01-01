@@ -1,6 +1,8 @@
 package questionAnswer
 
 import (
+	"database/sql"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	questionAnswerDatabase "github.com/returnone-x/server/database/question/answer"
@@ -47,4 +49,64 @@ func NewAnswer(c *fiber.Ctx) error {
 		"message": "Successful post a new question answer",
 		"data":    result,
 	})
+}
+
+func UpVote(c *fiber.Ctx) error {
+	// vote 1 = up vote
+	// use function from function.go
+	return Vote(c, 1)
+}
+
+func DownVote(c *fiber.Ctx) error {
+	// vote 2 = donw vote
+	// use function from function.go
+	return Vote(c, 2)
+}
+
+func DeleteVote(c *fiber.Ctx) error {
+	// get params
+	params := c.AllParams()
+
+	// if user not send parms data
+	if params["answer_id"] == "" {
+		return c.Status(400).JSON(utils.InvalidRequest())
+	}
+
+	// get question data from database for check does this question exist
+	answer_count, err := questionAnswerDatabase.GetQuestionAnswerByAnswerId(params["answer_id"])
+
+	// handle error
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return c.Status(400).JSON(utils.ErrorMessage("Can't find this question", err))
+		} else {
+			return c.Status(500).JSON(utils.ErrorMessage("Error when get question from database", err))
+		}
+	}
+
+	if answer_count == 0 {
+		return c.Status(400).JSON(utils.ErrorMessage("Can't find this question", err))
+	}
+
+	// get user_id from accessToken cookie
+	token := c.Locals("access_token_context").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	user_id := claims["user_id"].(string)
+
+	// get user vote data(this question)
+	delete_result, err := questionAnswerDatabase.DeleteQuestionAnswerVote(params["answer_id"], user_id)
+
+	if err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error delete data", err))
+	}
+
+	// check does it really update
+	row_affected, _ := delete_result.RowsAffected()
+
+	if row_affected == 0 {
+		return c.Status(400).JSON(utils.ErrorMessage("Can't find this vote", err))
+	} else {
+		return c.SendStatus(204)
+	}
+
 }
