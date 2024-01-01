@@ -8,8 +8,10 @@ import (
 	"time"
 )
 
+var startTime = time.Date(2023, 12, 2, 10, 31, 32, 0, time.UTC)
+
 func GenerateUserAccountId() string {
-	snowflake.Epoch = time.Date(2023, 12, 2, 10, 31, 32, 0, time.UTC).UnixMilli()
+	snowflake.Epoch = startTime.UnixMilli()
 	node, _ := snowflake.NewNode(1)
 	id := node.Generate()
 
@@ -17,8 +19,16 @@ func GenerateUserAccountId() string {
 }
 
 func GenerateTokenId() string {
-	snowflake.Epoch = time.Date(2023, 12, 2, 10, 31, 32, 0, time.UTC).UnixMilli()
+	snowflake.Epoch = startTime.UnixMilli()
 	node, _ := snowflake.NewNode(2)
+	id := node.Generate()
+
+	return fmt.Sprint(id)
+}
+
+func GenerateQuestionId() string {
+	snowflake.Epoch = startTime.UnixMilli()
+	node, _ := snowflake.NewNode(3)
 	id := node.Generate()
 
 	return fmt.Sprint(id)

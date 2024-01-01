@@ -2,11 +2,8 @@ package main
 
 import (
 	"os"
-	"github.com/returnone-x/server/config"
-	"github.com/returnone-x/server/middleware"
-	"github.com/returnone-x/server/routes/auth"
 	"time"
-	"github.com/returnone-x/server/routes/user"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/csrf"
@@ -14,6 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/utils"
 	"github.com/joho/godotenv"
+	"github.com/returnone-x/server/config"
 )
 
 func main() {
@@ -56,18 +54,8 @@ func main() {
 			KeyGenerator:   utils.UUID,
 		}))
 	}
-
-	api_v1 := app.Group("/api/v1")
-
-	// set auth controller
-	auth_group := api_v1.Group("/auth")
-	auth.Setup(auth_group)
-
-	// set user controller
-	user_group := api_v1.Group("/user")
-	// set auth middleware(for check does user have right auth)
-	user_group.Use(middleware.VerificationAccessToken())
-	user.Setup(user_group)
+	
+	routes(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Welcome to returnone backend!")

@@ -17,7 +17,7 @@ func Rename(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(
 			fiber.Map{
-				"status":  "success",
+				"status":  "error",
 				"message": "Invalid post request",
 			})
 	}
@@ -60,11 +60,10 @@ func Rename(c *fiber.Ctx) error {
 }
 
 func GetAvatar(c *fiber.Ctx) error {
-	token := c.Locals("access_token_context").(*jwt.Token)
+	token := c.Locals("refresh_token_context").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	// get user_id from accessToken cookie
-	user_id := claims["user_id"].(string)
 
+	user_id := claims["user_id"].(string)
 	avatar, err := userDatabase.GetUserAvatar(user_id)
 
 	if err != nil {

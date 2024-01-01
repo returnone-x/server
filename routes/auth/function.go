@@ -15,8 +15,8 @@ func SetLoginCookies(user_id string, c *fiber.Ctx) (access_token string, refresh
 	refresh_token_id := utils.GenerateTokenId()
 
 	//generate Jwt token (exp set on the handler)
-	access_token, access_token_err := utils.GenerateJwtToken(user_id, access_token_id, 0,"accessToken", access_token_exp.Unix())
-	refresh_token, refresh_token_err := utils.GenerateJwtToken(user_id, refresh_token_id, 1,"refreshToken", refresh_token_exp.Unix())
+	access_token, access_token_err := utils.GenerateJwtToken(user_id, access_token_id, 0,"accessToken", generateAccessTokenExp().Unix())
+	refresh_token, refresh_token_err := utils.GenerateJwtToken(user_id, refresh_token_id, 1,"refreshToken", generateRefreshTokenExp().Unix())
 	
 	//handle errors
 	if refresh_token_err != nil {
@@ -47,8 +47,8 @@ func SetRefreshCookies(user_id string, refresh_token_id string, used_time int, c
 	access_token_id := utils.GenerateTokenId()
 
 	//generate Jwt token (exp set on the handler)
-	access_token, access_token_err := utils.GenerateJwtToken(user_id, access_token_id, 0, "accessToken", access_token_exp.Unix())
-	refresh_token, refresh_token_err := utils.GenerateJwtToken(user_id, refresh_token_id, used_time, "refreshToken", refresh_token_exp.Unix())
+	access_token, access_token_err := utils.GenerateJwtToken(user_id, access_token_id, 0, "accessToken", generateAccessTokenExp().Unix())
+	refresh_token, refresh_token_err := utils.GenerateJwtToken(user_id, refresh_token_id, used_time, "refreshToken", generateRefreshTokenExp().Unix())
 
 	//handle errors
 	if refresh_token_err != nil {
