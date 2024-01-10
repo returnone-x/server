@@ -69,6 +69,31 @@ func NewPost(c *fiber.Ctx) error {
 	})
 }
 
+func DeleteQuestion(c *fiber.Ctx) error {
+	params := c.AllParams()
+
+	// if user not send parms data
+	if params["question_id"] == "" {
+		return c.Status(400).JSON(utils.InvalidRequest())
+	}
+
+	token := c.Locals("access_token_context").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	// get user_id from accessToken cookie
+	user_id := claims["user_id"].(string)
+
+	result, err := questionDatabase.DeleteQuestion(params["question_id"], user_id)
+
+	if err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("When delete data got some error", err))
+	}
+	result_affected, _ := result.RowsAffected()
+	if result_affected == 0{
+		return c.Status(400).JSON(utils.ErrorMessage("Can't find this question or you dont have permission", err))
+	}
+	return c.SendStatus(204)
+}
+
 func UpVote(c *fiber.Ctx) error {
 	// vote 1 = up vote
 	// use function from function.go

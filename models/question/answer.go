@@ -8,6 +8,7 @@ type QuestionAnswerModal struct {
 	User_id     string    `json:"user_id"`
 	Content     string    `json:"content"`
 	Avatar      string    `json:"avatar"`
+	User_name   string    `json:"user_name"`
 	Up_vote     int       `json:"up_vote"`
 	Down_vote   int       `json:"down_vote"`
 	User_vote   int       `json:"user_vote"`

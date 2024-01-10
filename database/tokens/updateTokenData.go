@@ -7,8 +7,7 @@ import (
 )
 
 func UpdateToken(id string, used_time int) (sql.Result, error) {
-	// 取得當前時間
-	currentTime := time.Now()
+	now_time := time.Now().UTC()
 
 	sqlString := `
 	UPDATE tokens 
@@ -18,7 +17,7 @@ func UpdateToken(id string, used_time int) (sql.Result, error) {
 	WHERE id = $1
 	RETURNING *
 	`
-	result, err := db.DB.Exec(sqlString, id, used_time, currentTime)
+	result, err := db.DB.Exec(sqlString, id, used_time, now_time)
 
 	return result, err
 }

@@ -6,9 +6,39 @@ import (
 	questionModal "github.com/returnone-x/server/models/question"
 )
 
-func GetQuestionData(id string) (question_data questionModal.QuestionModal, err error) {
-	
-	sqlString := `SELECT * FROM questions WHERE id = $1;`
+func GetQuestionData(id string) (question_data questionModal.ReturnSourceResult, err error) {
+	sqlString := `
+	SELECT 
+		q.id, 
+		q.questioner_id, 
+		q.title,
+		q.tags_name,
+		q.tags_version,
+		q.content, 
+		q.views, 
+		q.create_at,
+		q.update_at,
+		u.user_name,
+		u.avatar
+	FROM 
+		questions q
+	JOIN 
+		users u ON q.questioner_id = u.id
+	WHERE 
+		q.id = $1
+	GROUP BY 
+		q.id, 
+		q.questioner_id, 
+		q.title,
+		q.tags_name,
+		q.tags_version,
+		q.content,
+		q.views, 
+		q.create_at,
+		q.update_at,
+		u.avatar,
+		u.user_name;
+	`
 	err = db.DB.QueryRow(sqlString, id).Scan(
 		&question_data.Id,
 		&question_data.Questioner_id,
@@ -19,6 +49,8 @@ func GetQuestionData(id string) (question_data questionModal.QuestionModal, err 
 		&question_data.Views,
 		&question_data.Create_at,
 		&question_data.Update_at,
+		&question_data.Questioner_name,
+		&question_data.Questioner_avatar,
 	)
 
 	return question_data, err
