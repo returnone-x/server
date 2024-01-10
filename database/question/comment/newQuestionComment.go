@@ -11,7 +11,7 @@ import (
 
 func NewQuestionComment(question_id string, commenter_id string, content string, reply string) (questionModal.QuestionCommentModal, error) {
 	comment_id := utils.GenerateQuestionId()
-	now_time := time.Now()
+	now_time := time.Now().UTC()
 	sqlString := `
 	INSERT INTO question_comments 
 	(id, question_id, commenter_id, content, reply, create_at, update_at) 
@@ -19,7 +19,7 @@ func NewQuestionComment(question_id string, commenter_id string, content string,
 	($1, $2, $3, $4, $5, $6, $7)
 	`
 	
-	_, err := db.DB.Exec(sqlString, comment_id, question_id, commenter_id, content, reply, now_time, time.Now())
+	_, err := db.DB.Exec(sqlString, comment_id, question_id, commenter_id, content, reply, now_time, now_time)
 
 	if err != nil{
 		insert_data := questionModal.QuestionCommentModal{

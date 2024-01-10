@@ -43,12 +43,37 @@ func NewAnswer(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(500).JSON(utils.ErrorMessage("When create data got some error", err))
 	}
-	
+
 	return c.Status(200).JSON(fiber.Map{
 		"status":  "success",
 		"message": "Successful post a new question answer",
 		"data":    result,
 	})
+}
+
+func DeleteAnswer(c *fiber.Ctx) error {
+	params := c.AllParams()
+
+	// if user not send parms data
+	if params["answer_id"] == "" {
+		return c.Status(400).JSON(utils.InvalidRequest())
+	}
+
+	token := c.Locals("access_token_context").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	// get user_id from accessToken cookie
+	user_id := claims["user_id"].(string)
+
+	result, err := questionAnswerDatabase.DeleteQuestionAnswer(params["answer_id"], user_id)
+
+	if err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("When delete data got some error", err))
+	}
+	result_affected, _ := result.RowsAffected()
+	if result_affected == 0 {
+		return c.Status(400).JSON(utils.ErrorMessage("Can't find this answer or you dont have permission", err))
+	}
+	return c.SendStatus(204)
 }
 
 func UpVote(c *fiber.Ctx) error {
@@ -78,14 +103,14 @@ func DeleteVote(c *fiber.Ctx) error {
 	// handle error
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return c.Status(400).JSON(utils.ErrorMessage("Can't find this question", err))
+			return c.Status(400).JSON(utils.ErrorMessage("Can't find this answer", err))
 		} else {
-			return c.Status(500).JSON(utils.ErrorMessage("Error when get question from database", err))
+			return c.Status(500).JSON(utils.ErrorMessage("Error when get answer from database", err))
 		}
 	}
 
 	if answer_count == 0 {
-		return c.Status(400).JSON(utils.ErrorMessage("Can't find this question", err))
+		return c.Status(400).JSON(utils.ErrorMessage("Can't find this answer", err))
 	}
 
 	// get user_id from accessToken cookie

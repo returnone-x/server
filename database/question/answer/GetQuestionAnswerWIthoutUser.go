@@ -5,7 +5,7 @@ import (
 	questionModal "github.com/returnone-x/server/models/question"
 )
 
-func GetQuestionAnswer(id string, user_id string) ([]questionModal.QuestionAnswerModal, error) {
+func GetQuestionAnswersWithoutId(id string) ([]questionModal.QuestionAnswerModal, error) {
 
 	sqlString := `
 	SELECT 
@@ -15,10 +15,10 @@ func GetQuestionAnswer(id string, user_id string) ([]questionModal.QuestionAnswe
 		qc.content, 
 		qc.create_at, 
 		qc.update_at, 
-		u.avatar, 
+		u.avatar,
+		u.user_name,
 		COUNT(qavu) AS count_up_vote, 
-		COUNT(qavd) AS count_down_vote, 
-		COALESCE(uqav.vote, 0) AS uqav_vote
+		COUNT(qavd) AS count_down_vote
 	FROM 
 		question_answers qc
 	JOIN 
@@ -27,8 +27,6 @@ func GetQuestionAnswer(id string, user_id string) ([]questionModal.QuestionAnswe
 		question_answer_votes qavu ON qc.id = qavu.answer_id AND qavu.vote = 1
 	LEFT JOIN 
 		question_answer_votes qavd ON qc.id = qavd.answer_id AND qavd.vote = 2
-	LEFT JOIN 
-		question_answer_votes uqav ON uqav.answer_id = qc.id AND $2 = uqav.voter_id
 	WHERE 
 		qc.question_id = $1
 	GROUP BY 
@@ -37,12 +35,12 @@ func GetQuestionAnswer(id string, user_id string) ([]questionModal.QuestionAnswe
 		qc.user_id, 
 		qc.content, 
 		qc.create_at, 
-		qc.update_at, 
+		qc.update_at,
 		u.avatar,
-		uqav.vote;
+		u.user_name
 	`
 
-	rows, err := db.DB.Query(sqlString, id, user_id)
+	rows, err := db.DB.Query(sqlString, id)
 
 	if err != nil {
 		return nil, err
@@ -63,9 +61,9 @@ func GetQuestionAnswer(id string, user_id string) ([]questionModal.QuestionAnswe
 			&answer.Create_at,
 			&answer.Update_at,
 			&answer.Avatar,
+			&answer.User_name,
 			&answer.Up_vote,
 			&answer.Down_vote,
-			&answer.User_vote,
 		)
 		if err != nil {
 			return nil, err

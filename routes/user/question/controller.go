@@ -10,10 +10,12 @@ func Setup(app fiber.Router) {
 	
 	// question controller
 	app.Post("/new" , NewPost)
+	app.Delete("/delete/:question_id", DeleteQuestion)
+
 	app.Post("/upvote/:question_id", UpVote)
 	app.Post("/downvote/:question_id", DownVote)
 	app.Delete("/deletevote/:question_id", DeleteVote)
-	
+
 	comment_group := app.Group("/comment")
 	questionComment.Setup(comment_group)
 

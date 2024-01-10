@@ -33,13 +33,13 @@ func main() {
 
 	// encrypt cookie
 	app.Use(encryptcookie.New(encryptcookie.Config{
+		Except: []string{"user_id"},
 		Key: os.Getenv("ENCRYPT_COOKIE_SECRET"),
 	}))
 
 	// cors middleware setup
-	app.Use(cors.New())
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "http://localhost:3000, https://returnone.tech",
+		AllowOrigins: "https://returnone.tech",
 		AllowHeaders:  "Origin, Content-Type, Accept",
 	}))
 	

@@ -13,7 +13,7 @@ func CreateUser(
 	hash_password string,
 	user_name string,
 ) (userModles.UserAccount, error) {
-	now_time := time.Now()
+	now_time := time.Now().UTC()
 	sqlString := `
 	INSERT INTO users 
 	(id, email, password, user_name, email_verify, phone_verify, default_2fa, email_2fa, phone_2fa, totp_2fa, totp, create_at, update_at, avatar) 
@@ -64,7 +64,7 @@ func CreateUserWithGoogleLogin(
 	google_id string,
 	avatar string,
 ) (userModles.UserAccount, error) {
-	now_time := time.Now()
+	now_time := time.Now().UTC()
 	sqlString := `
 	INSERT INTO users 
 	(id, email, user_name, email_verify, phone_verify, default_2fa, email_2fa, phone_2fa, totp_2fa, totp, avatar, google_connect, create_at, update_at) 
@@ -115,7 +115,7 @@ func CreateUserWithGithubLogin(
 	github_id string,
 	avatar string,
 ) (userModles.UserAccount, error) {
-	now_time := time.Now()
+	now_time := time.Now().UTC()
 	sqlString := `
 	INSERT INTO users 
 	(id, email, user_name, email_verify, phone_verify, default_2fa, email_2fa, phone_2fa, totp_2fa, totp, avatar, github_connect, create_at, update_at) 

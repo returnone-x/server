@@ -5,26 +5,27 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io"
-	"log"
-	"net/http"
+	"github.com/gofiber/fiber/v2"
+	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/returnone-x/server/config"
 	"github.com/returnone-x/server/database/redis"
 	tokenDatabase "github.com/returnone-x/server/database/tokens"
 	"github.com/returnone-x/server/database/user"
 	utils "github.com/returnone-x/server/utils"
+	"io"
+	"log"
+	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
-	"github.com/gofiber/fiber/v2"
-	jwt "github.com/golang-jwt/jwt/v5"
 )
 
 func generateAccessTokenExp() time.Time {
-	return time.Now().Add(time.Minute * 60)
+	return time.Now().UTC().Add(time.Minute * 60)
 }
 func generateRefreshTokenExp() time.Time {
-	return time.Now().Add(time.Hour * 24 * 30)
+	return time.Now().UTC().Add(time.Hour * 24 * 30)
 }
 
 func SignUp(c *fiber.Ctx) error {
@@ -82,20 +83,30 @@ func SignUp(c *fiber.Ctx) error {
 
 	//set cookies
 	access_token_cookie := fiber.Cookie{
-		Name:    "accessToken",
-		Value:   access_token,
-		Expires: generateAccessTokenExp(),
+		Name:     "accessToken",
+		Value:    access_token,
+		Expires:  generateAccessTokenExp(),
 		HTTPOnly: true,
+		Secure:   true,
+		Domain:   os.Getenv("DOMAIN_NAME"),
 	}
 	refresh_token_cookie := fiber.Cookie{
-		Name:    "refreshToken",
-		Value:   refresh_token,
-		Expires: generateRefreshTokenExp(),
+		Name:     "refreshToken",
+		Value:    refresh_token,
+		Expires:  generateRefreshTokenExp(),
 		HTTPOnly: true,
+		Secure:   true,
+		Domain:   os.Getenv("DOMAIN_NAME"),
 	}
+	user_id_cookie := fiber.Cookie{
+		Name:    "user_id",
+		Value:   save_data.Id,
+		Expires: generateAccessTokenExp(),
+		Domain:  os.Getenv("DOMAIN_NAME"),
+	}
+	c.Cookie(&user_id_cookie)
 	c.Cookie(&refresh_token_cookie)
 	c.Cookie(&access_token_cookie)
-
 	return c.Status(200).JSON(
 		fiber.Map{
 			"status":  "success",
@@ -157,17 +168,28 @@ func LogIn(c *fiber.Ctx) error {
 	// }
 	//set cookies
 	access_token_cookie := fiber.Cookie{
-		Name:    "accessToken",
-		Value:   access_token,
-		Expires: generateAccessTokenExp(),
+		Name:     "accessToken",
+		Value:    access_token,
+		Expires:  generateAccessTokenExp(),
 		HTTPOnly: true,
+		Secure:   true,
+		Domain:   os.Getenv("DOMAIN_NAME"),
 	}
 	refresh_token_cookie := fiber.Cookie{
-		Name:    "refreshToken",
-		Value:   refresh_token,
-		Expires: generateRefreshTokenExp(),
+		Name:     "refreshToken",
+		Value:    refresh_token,
+		Expires:  generateRefreshTokenExp(),
 		HTTPOnly: true,
+		Secure:   true,
+		Domain:   os.Getenv("DOMAIN_NAME"),
 	}
+	user_id_cookie := fiber.Cookie{
+		Name:    "user_id",
+		Value:   user_data.Id,
+		Expires: generateAccessTokenExp(),
+		Domain:  os.Getenv("DOMAIN_NAME"),
+	}
+	c.Cookie(&user_id_cookie)
 	c.Cookie(&refresh_token_cookie)
 	c.Cookie(&access_token_cookie)
 
@@ -267,17 +289,28 @@ func GoogleCallBack(c *fiber.Ctx) error {
 
 		//set cookies
 		access_token_cookie := fiber.Cookie{
-			Name:    "accessToken",
-			Value:   access_token,
-			Expires: generateAccessTokenExp(),
+			Name:     "accessToken",
+			Value:    access_token,
+			Expires:  generateAccessTokenExp(),
 			HTTPOnly: true,
+			Secure:   true,
+			Domain:   os.Getenv("DOMAIN_NAME"),
 		}
 		refresh_token_cookie := fiber.Cookie{
-			Name:    "refreshToken",
-			Value:   refresh_token,
-			Expires: generateRefreshTokenExp(),
+			Name:     "refreshToken",
+			Value:    refresh_token,
+			Expires:  generateRefreshTokenExp(),
 			HTTPOnly: true,
+			Secure:   true,
+			Domain:   os.Getenv("DOMAIN_NAME"),
 		}
+		user_id_cookie := fiber.Cookie{
+			Name:    "user_id",
+			Value:   account_result.Id,
+			Expires: generateAccessTokenExp(),
+			Domain:  os.Getenv("DOMAIN_NAME"),
+		}
+		c.Cookie(&user_id_cookie)
 		c.Cookie(&refresh_token_cookie)
 		c.Cookie(&access_token_cookie)
 		return c.Status(200).Redirect(config.WebsiteUrl() + "/logincomplete")
@@ -297,25 +330,35 @@ func GoogleCallBack(c *fiber.Ctx) error {
 
 	//set cookies
 	access_token_cookie := fiber.Cookie{
-		Name:    "accessToken",
-		Value:   access_token,
-		Expires: generateAccessTokenExp(),
+		Name:     "accessToken",
+		Value:    access_token,
+		Expires:  generateAccessTokenExp(),
 		HTTPOnly: true,
+		Secure:   true,
+		Domain:   os.Getenv("DOMAIN_NAME"),
 	}
 	refresh_token_cookie := fiber.Cookie{
-		Name:    "refreshToken",
-		Value:   refresh_token,
-		Expires: generateRefreshTokenExp(),
+		Name:     "refreshToken",
+		Value:    refresh_token,
+		Expires:  generateRefreshTokenExp(),
 		HTTPOnly: true,
+		Secure:   true,
+		Domain:   os.Getenv("DOMAIN_NAME"),
 	}
-	
+	user_id_cookie := fiber.Cookie{
+		Name:    "user_id",
+		Value:   save_account_result.Id,
+		Expires: generateAccessTokenExp(),
+		Domain:  os.Getenv("DOMAIN_NAME"),
+	}
+	c.Cookie(&user_id_cookie)
 	c.Cookie(&refresh_token_cookie)
 	c.Cookie(&access_token_cookie)
 	// for front end to check is this is the sign up if it is than popup a modal to let user change username
 	c.Cookie(&fiber.Cookie{
 		Name:    "first_login",
 		Value:   "1",
-		Expires: time.Now().Add(time.Second * 10),
+		Expires: time.Now().UTC().Add(time.Second * 10),
 	})
 
 	return c.Status(200).Redirect(config.WebsiteUrl() + "/logincomplete")
@@ -427,17 +470,28 @@ func GithubCallBack(c *fiber.Ctx) error {
 
 		//set cookies
 		access_token_cookie := fiber.Cookie{
-			Name:    "accessToken",
-			Value:   access_token,
-			Expires: generateAccessTokenExp(),
+			Name:     "accessToken",
+			Value:    access_token,
+			Expires:  generateAccessTokenExp(),
 			HTTPOnly: true,
+			Secure:   true,
+			Domain:   os.Getenv("DOMAIN_NAME"),
 		}
 		refresh_token_cookie := fiber.Cookie{
-			Name:    "refreshToken",
-			Value:   refresh_token,
-			Expires: generateRefreshTokenExp(),
+			Name:     "refreshToken",
+			Value:    refresh_token,
+			Expires:  generateRefreshTokenExp(),
 			HTTPOnly: true,
+			Secure:   true,
+			Domain:   os.Getenv("DOMAIN_NAME"),
 		}
+		user_id_cookie := fiber.Cookie{
+			Name:    "user_id",
+			Value:   account_reslut.Id,
+			Expires: generateAccessTokenExp(),
+			Domain:  os.Getenv("DOMAIN_NAME"),
+		}
+		c.Cookie(&user_id_cookie)
 		c.Cookie(&refresh_token_cookie)
 		c.Cookie(&access_token_cookie)
 		return c.Status(200).Redirect(config.WebsiteUrl() + "/logincomplete")
@@ -455,24 +509,35 @@ func GithubCallBack(c *fiber.Ctx) error {
 
 	//set cookies
 	access_token_cookie := fiber.Cookie{
-		Name:    "accessToken",
-		Value:   access_token,
-		Expires: generateAccessTokenExp(),
+		Name:     "accessToken",
+		Value:    access_token,
+		Expires:  generateAccessTokenExp(),
 		HTTPOnly: true,
+		Secure:   true,
+		Domain:   os.Getenv("DOMAIN_NAME"),
 	}
 	refresh_token_cookie := fiber.Cookie{
-		Name:    "refreshToken",
-		Value:   refresh_token,
-		Expires: generateRefreshTokenExp(),
+		Name:     "refreshToken",
+		Value:    refresh_token,
+		Expires:  generateRefreshTokenExp(),
 		HTTPOnly: true,
+		Secure:   true,
+		Domain:   os.Getenv("DOMAIN_NAME"),
 	}
+	user_id_cookie := fiber.Cookie{
+		Name:    "user_id",
+		Value:   save_account_reslut.Id,
+		Expires: generateAccessTokenExp(),
+		Domain:  os.Getenv("DOMAIN_NAME"),
+	}
+	c.Cookie(&user_id_cookie)
 	c.Cookie(&refresh_token_cookie)
 	c.Cookie(&access_token_cookie)
 	// for front end to check is this is the sign up if it is than popup a modal to let user change username
 	c.Cookie(&fiber.Cookie{
 		Name:    "first_login",
 		Value:   "1",
-		Expires: time.Now().Add(time.Second * 10),
+		Expires: time.Now().UTC().Add(time.Second * 10),
 	})
 	if save_data_err != nil {
 		log.Println("| Path:", c.Path(), "| Data:", user_data, "| Message:", save_data_err)
@@ -524,10 +589,10 @@ func RefreshToken(c *fiber.Ctx) error {
 	new_used_times++
 
 	// get user id
-	usre_id := claims["user_id"].(string)
+	user_id := claims["user_id"].(string)
 
 	// create new access token and refresh token (also update the refresh token used time)
-	access_token, refresh_token, error_message, err := SetRefreshCookies(usre_id, token_id, new_used_times, c)
+	access_token, refresh_token, error_message, err := SetRefreshCookies(user_id, token_id, new_used_times, c)
 
 	if err != nil {
 		return c.Status(500).JSON(utils.ErrorMessage(error_message, err))
@@ -535,18 +600,28 @@ func RefreshToken(c *fiber.Ctx) error {
 
 	//set cookies
 	access_token_cookie := fiber.Cookie{
-		Name:    "accessToken",
-		Value:   access_token,
-		Expires: generateAccessTokenExp(),
+		Name:     "accessToken",
+		Value:    access_token,
+		Expires:  generateAccessTokenExp(),
 		HTTPOnly: true,
+		Secure:   true,
+		Domain:   os.Getenv("DOMAIN_NAME"),
 	}
 	refresh_token_cookie := fiber.Cookie{
-		Name:    "refreshToken",
-		Value:   refresh_token,
-		Expires: generateRefreshTokenExp(),
+		Name:     "refreshToken",
+		Value:    refresh_token,
+		Expires:  generateRefreshTokenExp(),
 		HTTPOnly: true,
+		Secure:   true,
+		Domain:   os.Getenv("DOMAIN_NAME"),
 	}
-
+	user_id_cookie := fiber.Cookie{
+		Name:    "user_id",
+		Value:   user_id,
+		Expires: generateAccessTokenExp(),
+		Domain:  os.Getenv("DOMAIN_NAME"),
+	}
+	c.Cookie(&user_id_cookie)
 	c.Cookie(&refresh_token_cookie)
 	c.Cookie(&access_token_cookie)
 
@@ -572,20 +647,30 @@ func LogOut(c *fiber.Ctx) error {
 		return c.Status(401).JSON(utils.ErrorMessage("You have not logged in", err))
 	}
 
-    c.Cookie(&fiber.Cookie{
-        Name:     "accessToken",
-        Expires:  time.Now().Add(-(time.Hour * 2)),
-        HTTPOnly: true,
-        SameSite: "lax",
-    })
+	c.Cookie(&fiber.Cookie{
+		Name:     "accessToken",
+		Value:    "None",
+		Expires:  time.Now().UTC().Add(-(time.Hour * 2)),
+		HTTPOnly: true,
+		Secure:   true,
+		Domain:   os.Getenv("DOMAIN_NAME"),
+	})
 
 	c.Cookie(&fiber.Cookie{
-        Name:     "refreshToken",
-        Expires:  time.Now().Add(-(time.Hour * 2)),
-        HTTPOnly: true,
-        SameSite: "lax",
-    })
+		Name:     "refreshToken",
+		Value:    "None",
+		Expires:  time.Now().UTC().Add(-(time.Hour * 2)),
+		HTTPOnly: true,
+		Secure:   true,
+		Domain:   os.Getenv("DOMAIN_NAME"),
+	})
 
+	c.Cookie(&fiber.Cookie{
+		Name:    "user_id",
+		Value: "None",
+		Expires: time.Now().UTC().Add(-(time.Hour * 2)),
+		Domain:  os.Getenv("DOMAIN_NAME"),
+	})
 	return c.Status(200).JSON(
 		fiber.Map{
 			"status":  "success",
@@ -596,7 +681,7 @@ func LogOut(c *fiber.Ctx) error {
 func CheckAuthorizationa(c *fiber.Ctx) error {
 	token := c.Locals("access_token_context").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	if claims["exp"].(float64)-float64(time.Now().Unix()) < 60 * 20 {
+	if claims["exp"].(float64)-float64(time.Now().UTC().Unix()) < 60*20 {
 		return c.Status(200).JSON(
 			fiber.Map{
 				"status":  "success",
