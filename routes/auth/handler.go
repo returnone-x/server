@@ -641,11 +641,8 @@ func LogOut(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(500).JSON(utils.ErrorMessage("When delete this session database got some error", err))
 	}
-	affected_row, _ := result.RowsAffected()
 
-	if affected_row == 0 {
-		return c.Status(401).JSON(utils.ErrorMessage("You have not logged in", err))
-	}
+	result.RowsAffected()
 
 	c.Cookie(&fiber.Cookie{
 		Name:     "accessToken",
