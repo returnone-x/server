@@ -2,6 +2,10 @@ package public
 
 import (
 	"database/sql"
+	"fmt"
+	"sort"
+	"strconv"
+
 	"github.com/gofiber/fiber/v2"
 	jwt "github.com/golang-jwt/jwt/v5"
 	questionDatabase "github.com/returnone-x/server/database/question"
@@ -9,8 +13,6 @@ import (
 	questionCommentDatabase "github.com/returnone-x/server/database/question/comment"
 	questionModal "github.com/returnone-x/server/models/question"
 	utils "github.com/returnone-x/server/utils"
-	"sort"
-	"strconv"
 )
 
 func GetQuestion(c *fiber.Ctx) error {
@@ -95,7 +97,7 @@ func GetQuestion(c *fiber.Ctx) error {
 	// get user vote data(this question)
 	user_vote_result, err := questionDatabase.GetUserQuestionVote(params["id"], user_id)
 
-	if err != nil && err != sql.ErrNoRows  {
+	if err != nil && err != sql.ErrNoRows {
 		return c.Status(500).JSON(utils.ErrorMessage("Error get data", err))
 	}
 
@@ -106,7 +108,7 @@ func GetQuestion(c *fiber.Ctx) error {
 	}
 
 	sort.Slice(question_answers_result[:], func(i, j int) bool {
-		return question_answers_result[i].Up_vote - question_answers_result[i].Down_vote > question_answers_result[j].Up_vote - question_answers_result[j].Down_vote
+		return question_answers_result[i].Up_vote-question_answers_result[i].Down_vote > question_answers_result[j].Up_vote-question_answers_result[j].Down_vote
 	})
 
 	return_result := questionModal.ReturnResult{
@@ -162,4 +164,56 @@ func GetQuestionComment(c *fiber.Ctx) error {
 		"message": "successful get comment data",
 		"data":    result,
 	})
+}
+
+func PageReturnNumber(page string) (int, error) {
+	if page == "" {
+		return 1, nil
+	} else {
+		page_number, err := strconv.Atoi(page)
+		if err != nil {
+			return 0, err
+		}
+		return page_number, nil
+	}
+}
+
+func GetQuestions(c *fiber.Ctx) error {
+	tag := c.Query("tag")
+	page := c.Query("page")
+
+	number_page, err := PageReturnNumber(page)
+
+	if err != nil {
+		fmt.Println(err)
+		return c.Status(400).JSON(utils.RequestValueValid("page"))
+	}
+
+	if tag == "" {
+		result, err := questionDatabase.GetQuestions(number_page)
+
+		if err != nil {
+			return c.Status(500).JSON(utils.ErrorMessage("Error get questions", err))
+		}
+
+		return c.Status(200).JSON(fiber.Map{
+			"status":  "successful",
+			"message": "successful get questions",
+			"data":    result,
+		})
+	}
+
+	result, err := questionDatabase.GetQuestionsWithTag(tag, number_page)
+
+	if err != nil {
+		fmt.Println(err)
+		return c.Status(500).JSON(utils.ErrorMessage("Error get questions", err))
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"status":  "successful",
+		"message": "successful get questions",
+		"data":    result,
+	})
+
 }

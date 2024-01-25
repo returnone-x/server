@@ -39,7 +39,7 @@ func GithubOauth() oauth2.Config {
 		RedirectURL:  redirect_url,
 		ClientID:     os.Getenv("GITHUB_CLIENT_ID"),
 		ClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
-		Scopes:       []string{"user", "read:user"},
+		Scopes:       []string{"user", "read:user", "user:email"},
 		Endpoint:     github.Endpoint,
 	}
 

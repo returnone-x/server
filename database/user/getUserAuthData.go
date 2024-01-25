@@ -60,6 +60,24 @@ func GetGoogleAccount(google_id string) (OauthData, error) {
 	return user_data, err
 }
 
+func GetGoogleAccountWithEmail(email string) (OauthData, error) {
+
+	var user_data OauthData
+
+	sqlString := `SELECT id, email_verify, email_2fa, phone_2fa, totp_2fa, totp, default_2fa FROM users WHERE email = $1;`
+	err := db.DB.QueryRow(sqlString, email).Scan(
+		&user_data.Id,
+		&user_data.Email_verify,
+		&user_data.Email_2fa,
+		&user_data.Phone_2fa,
+		&user_data.Totp_2fa,
+		&user_data.Totp,
+		&user_data.Default_2fa,
+			
+	)
+	return user_data, err
+}
+
 func GetGithubAccount(github_id string) (OauthData, error) {
 
 	var user_data OauthData
