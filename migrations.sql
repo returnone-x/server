@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
     "password" varchar(255) NULL,
     "email_verify" boolean NOT NULL,
     "phone_verify" boolean NOT NULL,
-    "avatar" varchar(100) NOT NULL DEFAULT "https://i1.sndcdn.com/artworks-DMKEsjVymB5A2teD-yr6bng-t240x240.jpg",
+    "avatar" varchar(255) NOT NULL DEFAULT "https://i1.sndcdn.com/artworks-DMKEsjVymB5A2teD-yr6bng-t240x240.jpg",
     "display_name" varchar(50) NULL,
     "user_name" varchar(30) NOT NULL,
     "github_connect" varchar(50) NULL,

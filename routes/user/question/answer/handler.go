@@ -135,3 +135,9 @@ func DeleteVote(c *fiber.Ctx) error {
 	}
 
 }
+
+func GetQuestion(c *fiber.Ctx) error {
+	
+	
+	return c.SendStatus(200)
+}

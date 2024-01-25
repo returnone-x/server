@@ -12,4 +12,6 @@ func Setup(app fiber.Router) {
 	app.Post("/upvote/:answer_id", UpVote)
 	app.Post("/downvote/:answer_id", DownVote)
 	app.Delete("/deletevote/:answer_id", DeleteVote)
+
+	app.Get("/", GetQuestion)
 }

@@ -24,6 +24,7 @@ import (
 func generateAccessTokenExp() time.Time {
 	return time.Now().UTC().Add(time.Minute * 60)
 }
+
 func generateRefreshTokenExp() time.Time {
 	return time.Now().UTC().Add(time.Hour * 24 * 30)
 }
@@ -316,12 +317,19 @@ func GoogleCallBack(c *fiber.Ctx) error {
 		return c.Status(200).Redirect(config.WebsiteUrl() + "/logincomplete")
 	}
 
+	// check does user already create a account
+	_, get_user_data_by_email_error := userDatabase.GetGoogleAccountWithEmail(user_data["email"].(string))
+	if get_user_data_by_email_error != nil {
+		return c.Status(400).JSON(utils.ErrorMessage("You have already use this google account's email register", nil))
+	}
+
 	// if this user didn't sign up than create user data
-	save_account_result, save_data_err := userDatabase.CreateUserWithGoogleLogin(user_data["id"].(string), user_data["picture"].(string))
+	save_account_result, save_data_err := userDatabase.CreateUserWithGoogleLogin(user_data["email"].(string), user_data["picture"].(string), user_data["id"].(string))
 	if save_data_err != nil {
 		log.Println("| Path:", c.Path(), "| Data:", user_data, "| Message:", save_data_err)
 		return c.Status(500).JSON(utils.ErrorMessage("Error creating user", save_data_err))
 	}
+
 	access_token, refresh_token, error_message, err := SetLoginCookies(save_account_result.Id, c)
 
 	if err != nil {
@@ -437,6 +445,7 @@ func GithubCallBack(c *fiber.Ctx) error {
 
 	// get the user data
 	resp, err := client.Do(req)
+
 	if err != nil {
 		return c.Status(500).JSON(utils.ErrorMessage("User data fetch failed", err))
 	}
@@ -451,6 +460,50 @@ func GithubCallBack(c *fiber.Ctx) error {
 	err = json.Unmarshal([]byte(json_str), &user_data)
 	if err != nil {
 		return c.Status(500).JSON(utils.ErrorMessage("JSON unmarshal failed", err))
+	}
+	fmt.Println(user_data)
+
+	// get user email
+	email_client := &http.Client{}
+
+	email_req, err := http.NewRequest("GET", "https://api.github.com/user/emails", nil)
+	if err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("User data fetch failed", err))
+	}
+
+	email_req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+	email_req.Header.Set("Authorization", "Bearer "+token.AccessToken)
+	email_req.Header.Set("Accept", "application/vnd.github+json")
+
+	// get the user data
+	email_resp, err := email_client.Do(email_req)
+
+	if err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("User data fetch failed", err))
+	}
+
+	user_emails_data_byte, err := io.ReadAll(email_resp.Body)
+	if err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("JSON parsing failed", err))
+	}
+	emails_json_str := string(user_emails_data_byte)
+	var user_emails []map[string]interface{}
+	err = json.Unmarshal([]byte(emails_json_str), &user_emails)
+	if err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("JSON unmarshal failed", err))
+	}
+
+	var primary_email string
+
+	// get primary email
+	for _, userMap := range user_emails {
+		if primary, ok := userMap["primary"].(bool); ok && primary {
+
+			primary_email, ok = userMap["email"].(string)
+			if !ok {
+				return c.Status(500).JSON(utils.ErrorMessage("JSON unmarshal failed", err))
+			}
+		}
 	}
 
 	// convert user data id to string
@@ -498,7 +551,7 @@ func GithubCallBack(c *fiber.Ctx) error {
 	}
 
 	// if this user didn't sign up than create user data
-	save_account_reslut, save_data_err := userDatabase.CreateUserWithGithubLogin(user_github_id, user_data["avatar_url"].(string))
+	save_account_reslut, save_data_err := userDatabase.CreateUserWithGithubLogin(primary_email, user_github_id, user_data["avatar_url"].(string))
 
 	// get user data from database (verify this user is log in or sign up)
 	access_token, refresh_token, error_message, err := SetLoginCookies(save_account_reslut.Id, c)
@@ -664,7 +717,7 @@ func LogOut(c *fiber.Ctx) error {
 
 	c.Cookie(&fiber.Cookie{
 		Name:    "user_id",
-		Value: "None",
+		Value:   "None",
 		Expires: time.Now().UTC().Add(-(time.Hour * 2)),
 		Domain:  os.Getenv("DOMAIN_NAME"),
 	})

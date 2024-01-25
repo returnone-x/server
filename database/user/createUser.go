@@ -37,7 +37,7 @@ func CreateUser(
 		"",
 		now_time,
 		now_time,
-		"https://i1.sndcdn.com/artworks-DMKEsjVymB5A2teD-yr6bng-t240x240.jpg",)
+		"https://i1.sndcdn.com/artworks-DMKEsjVymB5A2teD-yr6bng-t240x240.jpg")
 
 	insert_data := userModles.UserAccount{
 		Id:             user_id,
@@ -61,8 +61,9 @@ func CreateUser(
 }
 
 func CreateUserWithGoogleLogin(
-	google_id string,
+	email string,
 	avatar string,
+	google_id string,
 ) (userModles.UserAccount, error) {
 	now_time := time.Now().UTC()
 	sqlString := `
@@ -76,7 +77,7 @@ func CreateUserWithGoogleLogin(
 
 	_, err := config.DB.Exec(
 		sqlString,
-		user_id, "",
+		user_id, email,
 		user_id,
 		false,
 		false,
@@ -92,7 +93,7 @@ func CreateUserWithGoogleLogin(
 
 	insert_data := userModles.UserAccount{
 		Id:             user_id,
-		Email:          "",
+		Email:          email,
 		Phone:          "",
 		Phone_country:  "",
 		Email_verify:   true,
@@ -112,6 +113,7 @@ func CreateUserWithGoogleLogin(
 }
 
 func CreateUserWithGithubLogin(
+	github_email string,
 	github_id string,
 	avatar string,
 ) (userModles.UserAccount, error) {
@@ -127,7 +129,7 @@ func CreateUserWithGithubLogin(
 
 	_, err := config.DB.Exec(
 		sqlString,
-		user_id, "",
+		user_id, github_email,
 		user_id,
 		false,
 		false,
@@ -143,7 +145,7 @@ func CreateUserWithGithubLogin(
 
 	insert_data := userModles.UserAccount{
 		Id:             user_id,
-		Email:          "",
+		Email:          github_email,
 		Phone:          "",
 		Phone_country:  "",
 		Email_verify:   true,
