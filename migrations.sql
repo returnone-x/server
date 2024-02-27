@@ -1,5 +1,4 @@
 -- https://app.sqldbm.com/PostgreSQL/DatabaseExplorer/p282867/#
-
 CREATE TABLE IF NOT EXISTS users (
     "id" varchar(50) PRIMARY KEY NOT NULL,
     "email" varchar(100) NOT NULL,
@@ -112,3 +111,15 @@ CREATE TABLE IF NOT EXISTS question_answer_votes (
 
 -- cus we need use answer_id to get how many user vote up or down so need create a index
 CREATE INDEX IF NOT EXISTS question_answer_votes_FK_1 ON question_answer_votes ("answer_id");
+
+CREATE TABLE question_chat (
+    "id" varchar(50) PRIMARY KEY NOT NULL,
+    "question_id" varchar(50) NOT NULL,
+    "reply" varchar(50),
+    "author" varchar(50) NOT NULL,
+    "content" varchar(50) NOT NULL,
+    "image" varchar(255) [] NOT NULL,
+    "create_at" timestamp NOT NULL,
+    "update_at" timestamp NOT NULL,
+    CONSTRAINT question_chat_FK_1 FOREIGN KEY ("question_id") REFERENCES questions ("id")
+);

@@ -92,3 +92,13 @@ func GetQuestions(page int) ([]questionModal.ReturnResultWithVoteAndAnswers, err
 
 	return questions, err
 }
+
+func GetQuestionsNumber() (int, error) {
+	var questions_count int
+
+	sqlString := `SELECT count(*) FROM questions;`
+
+	err := db.DB.QueryRow(sqlString).Scan(&questions_count)
+
+	return questions_count, err
+}
