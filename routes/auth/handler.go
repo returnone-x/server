@@ -11,9 +11,9 @@ import (
 	"github.com/returnone-x/server/database/redis"
 	tokenDatabase "github.com/returnone-x/server/database/tokens"
 	"github.com/returnone-x/server/database/user"
+	userSettingDatabase "github.com/returnone-x/server/database/user/setting"
 	utils "github.com/returnone-x/server/utils"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -71,10 +71,15 @@ func SignUp(c *fiber.Ctx) error {
 	save_data, save_data_err := userDatabase.CreateUser(data["email"], hash_password, data["user_name"])
 
 	if save_data_err != nil {
-		log.Println("| Path:", c.Path(), "| Data:", data, "| Message:", save_data_err)
 		return c.Status(500).JSON(utils.ErrorMessage("Error creating user", save_data_err))
 	}
 
+	// create user profile
+	save_data_err = userSettingDatabase.CreateUserProfile(save_data.Id)
+
+	if save_data_err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error createing user profile", save_data_err))
+	}
 	// get user data from database (verify this user is log in or sign up)
 	access_token, refresh_token, error_message, err := SetLoginCookies(save_data.Id, c)
 
@@ -326,8 +331,14 @@ func GoogleCallBack(c *fiber.Ctx) error {
 	// if this user didn't sign up than create user data
 	save_account_result, save_data_err := userDatabase.CreateUserWithGoogleLogin(user_data["email"].(string), user_data["picture"].(string), user_data["id"].(string))
 	if save_data_err != nil {
-		log.Println("| Path:", c.Path(), "| Data:", user_data, "| Message:", save_data_err)
 		return c.Status(500).JSON(utils.ErrorMessage("Error creating user", save_data_err))
+	}
+
+	// create user profile
+	save_data_err = userSettingDatabase.CreateUserProfile(save_account_result.Id)
+
+	if save_data_err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error createing user profile", save_data_err))
 	}
 
 	access_token, refresh_token, error_message, err := SetLoginCookies(save_account_result.Id, c)
@@ -553,6 +564,17 @@ func GithubCallBack(c *fiber.Ctx) error {
 	// if this user didn't sign up than create user data
 	save_account_reslut, save_data_err := userDatabase.CreateUserWithGithubLogin(primary_email, user_github_id, user_data["avatar_url"].(string))
 
+	if save_data_err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error createing user", save_data_err))
+	}
+
+	// create user profile
+	save_data_err = userSettingDatabase.CreateUserProfile(save_account_reslut.Id)
+
+	if save_data_err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error createing user profile", save_data_err))
+	}
+
 	// get user data from database (verify this user is log in or sign up)
 	access_token, refresh_token, error_message, err := SetLoginCookies(save_account_reslut.Id, c)
 
@@ -592,10 +614,6 @@ func GithubCallBack(c *fiber.Ctx) error {
 		Value:   "1",
 		Expires: time.Now().UTC().Add(time.Second * 10),
 	})
-	if save_data_err != nil {
-		log.Println("| Path:", c.Path(), "| Data:", user_data, "| Message:", save_data_err)
-		return c.Status(500).JSON(utils.ErrorMessage("Error creating user", save_data_err))
-	}
 
 	c.Cookie(&refresh_token_cookie)
 	c.Cookie(&access_token_cookie)

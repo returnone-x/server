@@ -253,7 +253,7 @@ func ResetTotp(c *fiber.Ctx) error {
 	claims := token.Claims.(jwt.MapClaims)
 	user_id := claims["user_id"].(string)
 
-	result, err := userSettingDatabase.UpdateDisplayName(user_id, data["totp"])
+	result, err := userSettingDatabase.UpdateTotp(user_id, data["totp"])
 	if err != nil {
 		return c.Status(500).JSON(utils.ErrorMessage("Error update totp", err))
 	}
@@ -315,5 +315,225 @@ func GetUser(c *fiber.Ctx) error {
 		"data":    user_data_detil,
 		"status":  "successful",
 		"message": "successful get user setting detil",
+	})
+}
+
+func ResetBio(c *fiber.Ctx) error {
+
+	var data map[string]string
+
+	err := c.BodyParser(&data)
+
+	if err != nil {
+		return c.Status(400).JSON(
+			fiber.Map{
+				"status":  "error",
+				"message": "Invalid post request",
+			})
+	}
+
+	if data["bio"] == "" {
+		return c.Status(400).JSON(utils.RequestValueValid("bio"))
+	}
+
+	if len(data["bio"]) > 150 {
+		return c.Status(400).JSON(utils.RequestValueValid("bio"))
+	}
+
+	token := c.Locals("access_token_context").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	user_id := claims["user_id"].(string)
+
+	result, err := userSettingDatabase.UpdateBio(user_id, data["bio"])
+	if err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error update bio", err))
+	}
+	// check does it really update
+	row_affected, _ := result.RowsAffected()
+	// if not update return server error or return 200 status code
+	if row_affected == 0 {
+		return c.Status(500).JSON(utils.ErrorMessage("Error update bio", err))
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"status":  "successful",
+		"message": "successful update bio",
+	})
+}
+
+func ResetPublicEmail(c *fiber.Ctx) error {
+
+	var data map[string]string
+
+	err := c.BodyParser(&data)
+
+	if err != nil {
+		return c.Status(400).JSON(
+			fiber.Map{
+				"status":  "error",
+				"message": "Invalid post request",
+			})
+	}
+
+	if data["public_email"] == "" {
+		return c.Status(400).JSON(utils.RequestValueValid("public_email"))
+	}
+
+	if len(data["public_email"]) > 150 {
+		return c.Status(400).JSON(utils.RequestValueValid("public_email"))
+	}
+
+	token := c.Locals("access_token_context").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	user_id := claims["user_id"].(string)
+
+	result, err := userSettingDatabase.UpdatePublicEmail(user_id, data["public_email"])
+	if err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error update public email", err))
+	}
+	// check does it really update
+	row_affected, _ := result.RowsAffected()
+	// if not update return server error or return 200 status code
+	if row_affected == 0 {
+		return c.Status(500).JSON(utils.ErrorMessage("Error update public email", err))
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"status":  "successful",
+		"message": "successful update public email",
+	})
+}
+
+func ResetPronouns(c *fiber.Ctx) error {
+
+	var data map[string]string
+
+	err := c.BodyParser(&data)
+
+	if err != nil {
+		return c.Status(400).JSON(
+			fiber.Map{
+				"status":  "error",
+				"message": "Invalid post request",
+			})
+	}
+
+	if data["pronouns"] == "" {
+		return c.Status(400).JSON(utils.RequestValueValid("pronouns"))
+	}
+
+	if len(data["pronouns"]) > 20 {
+		return c.Status(400).JSON(utils.RequestValueValid("pronouns"))
+	}
+
+	token := c.Locals("access_token_context").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	user_id := claims["user_id"].(string)
+
+	result, err := userSettingDatabase.UpdatePronouns(user_id, data["pronouns"])
+	if err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error update pronouns", err))
+	}
+	// check does it really update
+	row_affected, _ := result.RowsAffected()
+	// if not update return server error or return 200 status code
+	if row_affected == 0 {
+		return c.Status(500).JSON(utils.ErrorMessage("Error update pronouns", err))
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"status":  "successful",
+		"message": "successful update pronouns",
+	})
+}
+
+
+func ResetWebsite(c *fiber.Ctx) error {
+
+	var data map[string]string
+
+	err := c.BodyParser(&data)
+
+	if err != nil {
+		return c.Status(400).JSON(
+			fiber.Map{
+				"status":  "error",
+				"message": "Invalid post request",
+			})
+	}
+
+	if data["website"] == "" {
+		return c.Status(400).JSON(utils.RequestValueValid("website"))
+	}
+
+	if len(data["website"]) > 150 {
+		return c.Status(400).JSON(utils.RequestValueValid("website"))
+	}
+
+	token := c.Locals("access_token_context").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	user_id := claims["user_id"].(string)
+
+	result, err := userSettingDatabase.UpdateWebsite(user_id, data["website"])
+	if err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error update website", err))
+	}
+	// check does it really update
+	row_affected, _ := result.RowsAffected()
+	// if not update return server error or return 200 status code
+	if row_affected == 0 {
+		return c.Status(500).JSON(utils.ErrorMessage("Error update website", err))
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"status":  "successful",
+		"message": "successful update website",
+	})
+}
+
+type RelateLinksRequestBody struct {
+	Related_links []string `json:"related_links"`
+}
+
+func ResetRelatedLinks(c *fiber.Ctx) error {
+
+	var data RelateLinksRequestBody
+
+	err := c.BodyParser(&data)
+
+	if err != nil {
+		return c.Status(400).JSON(
+			fiber.Map{
+				"status":  "error",
+				"message": "Invalid post request",
+			})
+	}
+
+	if len(data.Related_links) == 0 {
+		return c.Status(400).JSON(utils.RequestValueValid("related_links"))
+	}
+
+	if len(data.Related_links) > 6 {
+		return c.Status(400).JSON(utils.RequestValueValid("related_links"))
+	}
+
+	token := c.Locals("access_token_context").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	user_id := claims["user_id"].(string)
+
+	result, err := userSettingDatabase.UpdateRelateLinks(user_id, data.Related_links)
+	if err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error update related_links", err))
+	}
+	// check does it really update
+	row_affected, _ := result.RowsAffected()
+	// if not update return server error or return 200 status code
+	if row_affected == 0 {
+		return c.Status(500).JSON(utils.ErrorMessage("Error update related_links", err))
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"status":  "successful",
+		"message": "successful update relate links",
 	})
 }
