@@ -8,7 +8,7 @@ import (
 )
 
 func NewQuestionAnswer(user_id string, content string, question_id string) (questionModal.QuestionAnswerModal, error) {
-	answer_id := utils.GenerateQuestionId()
+	answer_id := utils.GenerateQuestionAnswerId()
 	now_time := time.Now().UTC()
 	sqlString := `
 	INSERT INTO question_answers

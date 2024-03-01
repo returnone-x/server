@@ -34,6 +34,22 @@ func GenerateQuestionId() string {
 	return fmt.Sprint(id)
 }
 
+func GenerateQuestionChatId() string {
+	snowflake.Epoch = startTime.UnixMilli()
+	node, _ := snowflake.NewNode(4)
+	id := node.Generate()
+
+	return fmt.Sprint(id)
+}
+
+func GenerateQuestionAnswerId() string {
+	snowflake.Epoch = startTime.UnixMilli()
+	node, _ := snowflake.NewNode(5)
+	id := node.Generate()
+
+	return fmt.Sprint(id)
+}
+
 func GenerateRandomBase64String() (string, error) {
 	randomBytes := make([]byte, 32)
 	_, err := rand.Read(randomBytes)

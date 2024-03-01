@@ -195,11 +195,18 @@ func GetQuestions(c *fiber.Ctx) error {
 		if err != nil {
 			return c.Status(500).JSON(utils.ErrorMessage("Error get questions", err))
 		}
+		
+		questions_number, err := questionDatabase.GetQuestionsNumber()
+
+		if err != nil {
+			return c.Status(500).JSON(utils.ErrorMessage("Error get questions", err))
+		}
 
 		return c.Status(200).JSON(fiber.Map{
-			"status":  "successful",
-			"message": "successful get questions",
-			"data":    result,
+			"status":           "successful",
+			"message":          "successful get questions",
+			"questions_number": questions_number,
+			"data":             result,
 		})
 	}
 

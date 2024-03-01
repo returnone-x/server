@@ -47,8 +47,8 @@ func NewComment(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(fiber.Map{
-		"status": "success",
+		"status":  "success",
 		"message": "successful create new comment data",
-		"data": result,
+		"data":    result,
 	})
 }

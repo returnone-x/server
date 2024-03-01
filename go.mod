@@ -24,6 +24,7 @@ require (
 	github.com/gofiber/storage v1.3.3 // indirect
 	github.com/gofiber/storage/redis/v3 v3.1.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/pusher/pusher-http-go/v5 v5.1.1 // indirect
 	golang.org/x/net v0.19.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
@@ -38,6 +39,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/philhofer/fwd v1.1.2 // indirect
+	github.com/pusher/pusher-http-go v4.0.1+incompatible
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/tinylib/msgp v1.1.8 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
