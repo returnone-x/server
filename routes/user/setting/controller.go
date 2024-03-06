@@ -14,7 +14,10 @@ func Setup(app fiber.Router) {
 	app.Post("/reset/pronouns", ResetPronouns)
 	app.Post("/reset/bio", ResetBio)
 	app.Post("/reset/relatedlinks", ResetRelatedLinks)
-	app.Post("/reset/website", ResetWebsite)
+
+	app.Post("/resetall/name", ResetAllName)
+	app.Post("/resetall/profile", ResetAllProfile)
+
 
 	app.Get("/detil", GetUser)
 }

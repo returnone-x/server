@@ -2,21 +2,22 @@ package userDatabase
 
 import (
 	"fmt"
-	"github.com/returnone-x/server/config"
-	"github.com/returnone-x/server/models/user"
-	utils "github.com/returnone-x/server/utils"
 	"time"
+
+	"github.com/returnone-x/server/config"
+	userModles "github.com/returnone-x/server/models/user"
+	utils "github.com/returnone-x/server/utils"
 )
 
 func CreateUser(
 	email string,
 	hash_password string,
-	user_name string,
+	username string,
 ) (userModles.UserAccount, error) {
 	now_time := time.Now().UTC()
 	sqlString := `
 	INSERT INTO users 
-	(id, email, password, user_name, email_verify, phone_verify, default_2fa, email_2fa, phone_2fa, totp_2fa, totp, create_at, update_at, avatar) 
+	(id, email, password, username, email_verify, phone_verify, default_2fa, email_2fa, phone_2fa, totp_2fa, totp, create_at, update_at, avatar) 
 	VALUES 
 	($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 	`
@@ -27,7 +28,7 @@ func CreateUser(
 		sqlString,
 		user_id, email,
 		hash_password,
-		user_name,
+		username,
 		false,
 		false,
 		1,
@@ -47,7 +48,7 @@ func CreateUser(
 		Email_verify:   false,
 		Phone_verify:   false,
 		Avatar:         "",
-		User_name:      user_name,
+		Username:       username,
 		Github_connect: "",
 		Google_connect: "",
 		Email_2fa:      true,
@@ -68,7 +69,7 @@ func CreateUserWithGoogleLogin(
 	now_time := time.Now().UTC()
 	sqlString := `
 	INSERT INTO users 
-	(id, email, user_name, email_verify, phone_verify, default_2fa, email_2fa, phone_2fa, totp_2fa, totp, avatar, google_connect, create_at, update_at) 
+	(id, email, username, email_verify, phone_verify, default_2fa, email_2fa, phone_2fa, totp_2fa, totp, avatar, google_connect, create_at, update_at) 
 	VALUES 
 	($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 	`
@@ -99,7 +100,7 @@ func CreateUserWithGoogleLogin(
 		Email_verify:   true,
 		Phone_verify:   false,
 		Avatar:         avatar,
-		User_name:      user_id,
+		Username:       user_id,
 		Github_connect: "",
 		Google_connect: google_id,
 		Email_2fa:      true,
@@ -120,7 +121,7 @@ func CreateUserWithGithubLogin(
 	now_time := time.Now().UTC()
 	sqlString := `
 	INSERT INTO users 
-	(id, email, user_name, email_verify, phone_verify, default_2fa, email_2fa, phone_2fa, totp_2fa, totp, avatar, github_connect, create_at, update_at) 
+	(id, email, username, email_verify, phone_verify, default_2fa, email_2fa, phone_2fa, totp_2fa, totp, avatar, github_connect, create_at, update_at) 
 	VALUES 
 	($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 	`
@@ -151,7 +152,7 @@ func CreateUserWithGithubLogin(
 		Email_verify:   true,
 		Phone_verify:   false,
 		Avatar:         avatar,
-		User_name:      user_id,
+		Username:       user_id,
 		Github_connect: github_id,
 		Google_connect: "",
 		Email_2fa:      true,

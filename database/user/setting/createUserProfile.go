@@ -8,11 +8,11 @@ import (
 func CreateUserProfile(user_id string) error {
 	sqlString := `
 	INSERT INTO user_profile
-	(id, bio, public_email, pronouns, website, related_links) 
+	(id, bio, public_email, pronouns, related_links) 
 	VALUES 
-	($1, $2, $3, $4, $5, $6)
+	($1, $2, $3, $4, $5)
 	`
-	_, err := db.DB.Exec(sqlString, user_id, "", "", "", "", pq.Array([]string{}))
+	_, err := db.DB.Exec(sqlString, user_id, "", "", "", pq.Array([]string{}))
 
 	return err
 }
