@@ -18,7 +18,7 @@ func GetQuestions(page int) ([]questionModal.ReturnResultWithVoteAndAnswers, err
 		q.views, 
 		q.create_at,
 		q.update_at,
-		u.user_name,
+		u.username,
 		u.avatar,
 		COUNT(qvu) AS count_up_vote, 
 		COUNT(qvd) AS count_down_vote,
@@ -44,7 +44,7 @@ func GetQuestions(page int) ([]questionModal.ReturnResultWithVoteAndAnswers, err
 		q.create_at,
 		q.update_at,
 		u.avatar,
-		u.user_name
+		u.username
 	ORDER BY q.create_at DESC
 	LIMIT 15
 	OFFSET ($1 - 1) * 15;

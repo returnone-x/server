@@ -2,33 +2,41 @@ package userDatabase
 
 import (
 	db "github.com/returnone-x/server/config"
-	"github.com/returnone-x/server/models/user"
+	userModles "github.com/returnone-x/server/models/user"
 )
 
-func GetUserDetil(id string) (userModles.UserAccount, error) {
+func GetUserDetil(id string) (userModles.UserDetil, error) {
 	var user_data userModles.UserAccount
 
 	sqlString := `SELECT 
-		id,
-		email,
-		COALESCE(phone, '') AS phone,
-		COALESCE(phone_country, '') AS phone_country,
-		COALESCE(password, '') AS password,
-		email_verify,
-		phone_verify,
-		avatar,
-		COALESCE(display_name, '') AS display_name,
-		user_name,
-		COALESCE(github_connect, '') AS github_connect,
-		COALESCE(google_connect, '') AS google_connect,
-		email_2fa,
-		phone_2fa,
-		totp_2fa,
-		COALESCE(totp, '') AS totp,
-		default_2fa,
+		u.id,
+		u.email,
+		COALESCE(u.phone, '') AS phone,
+		COALESCE(u.phone_country, '') AS phone_country,
+		COALESCE(u.password, '') AS password,
+		u.email_verify,
+		u.phone_verify,
+		u.avatar,
+		COALESCE(u.display_name, '') AS display_name,
+		u.username,
+		COALESCE(u.github_connect, '') AS github_connect,
+		COALESCE(u.google_connect, '') AS google_connect,
+		u.email_2fa,
+		u.phone_2fa,
+		u.totp_2fa,
+		COALESCE(u.totp, '') AS totp,
+		u.default_2fa,
+		up.bio,
+		up.public_email,
+		up.pronouns,
+		up.related_links,
 		create_at,
 		update_at
-	FROM users WHERE id = $1;`
+	FROM users	FROM 
+		users u
+	LEFT JOIN
+		user_profile up ON up.id = u.id 
+	WHERE id = $1;`
 	err := db.DB.QueryRow(sqlString, id).Scan(
 		&user_data.Id,
 		&user_data.Email,
@@ -39,7 +47,7 @@ func GetUserDetil(id string) (userModles.UserAccount, error) {
 		&user_data.Phone_verify,
 		&user_data.Avatar,
 		&user_data.Display_name,
-		&user_data.User_name,
+		&user_data.Username,
 		&user_data.Github_connect,
 		&user_data.Google_connect,
 		&user_data.Phone_2fa,

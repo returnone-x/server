@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
     "phone_verify" boolean NOT NULL,
     "avatar" varchar(255) NOT NULL DEFAULT "https://i1.sndcdn.com/artworks-DMKEsjVymB5A2teD-yr6bng-t240x240.jpg",
     "display_name" varchar(50) NULL,
-    "user_name" varchar(30) NOT NULL,
+    "username" varchar(30) NOT NULL,
     "github_connect" varchar(50) NULL,
     "google_connect" varchar(50) NULL,
     "email_2fa" boolean NOT NULL,
@@ -26,7 +26,6 @@ CREATE TABLE IF NOT EXISTS user_profile (
     "bio" text NOT NULL,
     "public_email" varchar(100) NOT NULL,
     "pronouns" varchar(50) NOT NULL,
-    "website" varchar(50) NOT NULL,
     "related_links" varchar(255) [] NOT NULL
 );
 

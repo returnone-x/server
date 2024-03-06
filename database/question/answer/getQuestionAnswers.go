@@ -16,7 +16,7 @@ func GetQuestionAnswers(id string, user_id string) ([]questionModal.QuestionAnsw
 		qc.create_at, 
 		qc.update_at, 
 		u.avatar,
-		u.user_name,
+		u.username,
 		COUNT(qavu) AS count_up_vote, 
 		COUNT(qavd) AS count_down_vote, 
 		COALESCE(uqav.vote, 0) AS uqav_vote
@@ -40,7 +40,7 @@ func GetQuestionAnswers(id string, user_id string) ([]questionModal.QuestionAnsw
 		qc.create_at, 
 		qc.update_at,
 		u.avatar,
-		u.user_name,
+		u.username,
 		uqav.vote;
 	`
 
@@ -65,7 +65,7 @@ func GetQuestionAnswers(id string, user_id string) ([]questionModal.QuestionAnsw
 			&answer.Create_at,
 			&answer.Update_at,
 			&answer.Avatar,
-			&answer.User_name,
+			&answer.Username,
 			&answer.Up_vote,
 			&answer.Down_vote,
 			&answer.User_vote,

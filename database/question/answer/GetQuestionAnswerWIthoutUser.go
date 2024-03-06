@@ -16,7 +16,7 @@ func GetQuestionAnswersWithoutId(id string) ([]questionModal.QuestionAnswerModal
 		qc.create_at, 
 		qc.update_at, 
 		u.avatar,
-		u.user_name,
+		u.username,
 		COUNT(qavu) AS count_up_vote, 
 		COUNT(qavd) AS count_down_vote
 	FROM 
@@ -37,7 +37,7 @@ func GetQuestionAnswersWithoutId(id string) ([]questionModal.QuestionAnswerModal
 		qc.create_at, 
 		qc.update_at,
 		u.avatar,
-		u.user_name
+		u.username
 	`
 
 	rows, err := db.DB.Query(sqlString, id)
@@ -61,7 +61,7 @@ func GetQuestionAnswersWithoutId(id string) ([]questionModal.QuestionAnswerModal
 			&answer.Create_at,
 			&answer.Update_at,
 			&answer.Avatar,
-			&answer.User_name,
+			&answer.Username,
 			&answer.Up_vote,
 			&answer.Down_vote,
 		)

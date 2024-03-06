@@ -14,22 +14,22 @@ func CheckUserEmailExist(email string) int {
 	return count
 }
 
-func CheckUserNameExist(user_name string) int {
+func CheckUserNameExist(username string) int {
 
 	var count int
 
-	sqlString := `SELECT COUNT(*) FROM users WHERE user_name = $1;`
-	config.DB.QueryRow(sqlString, user_name).Scan(&count)
+	sqlString := `SELECT COUNT(*) FROM users WHERE username = $1;`
+	config.DB.QueryRow(sqlString, username).Scan(&count)
 
 	return count
 }
 
-func CheckUserGoogleAccountExist(user_name string) int {
+func CheckUserGoogleAccountExist(username string) int {
 
 	var count int
 
 	sqlString := `SELECT COUNT(*) FROM users WHERE google_connect = $1;`
-	config.DB.QueryRow(sqlString, user_name).Scan(&count)
+	config.DB.QueryRow(sqlString, username).Scan(&count)
 
 	return count
 }

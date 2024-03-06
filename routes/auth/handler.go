@@ -5,20 +5,21 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/gofiber/fiber/v2"
-	jwt "github.com/golang-jwt/jwt/v5"
-	"github.com/returnone-x/server/config"
-	"github.com/returnone-x/server/database/redis"
-	tokenDatabase "github.com/returnone-x/server/database/tokens"
-	"github.com/returnone-x/server/database/user"
-	userSettingDatabase "github.com/returnone-x/server/database/user/setting"
-	utils "github.com/returnone-x/server/utils"
 	"io"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gofiber/fiber/v2"
+	jwt "github.com/golang-jwt/jwt/v5"
+	"github.com/returnone-x/server/config"
+	redisDB "github.com/returnone-x/server/database/redis"
+	tokenDatabase "github.com/returnone-x/server/database/tokens"
+	userDatabase "github.com/returnone-x/server/database/user"
+	userSettingDatabase "github.com/returnone-x/server/database/user/setting"
+	utils "github.com/returnone-x/server/utils"
 )
 
 func generateAccessTokenExp() time.Time {
@@ -43,12 +44,12 @@ func SignUp(c *fiber.Ctx) error {
 	}
 
 	// check if data is valid return error
-	request_data_error := utils.RequestDataRequired(data, []string{"email", "password", "user_name"})
+	request_data_error := utils.RequestDataRequired(data, []string{"email", "password", "username"})
 	if request_data_error != nil {
 		return c.Status(400).JSON(request_data_error)
 	}
 
-	if !utils.IsValidUsername(data["user_name"]) {
+	if !utils.IsValidUsername(data["username"]) {
 		return c.Status(400).JSON(utils.RequestValueValid("username"))
 	}
 
@@ -62,13 +63,13 @@ func SignUp(c *fiber.Ctx) error {
 	}
 
 	// check the user name has already been used
-	if userDatabase.CheckUserNameExist(data["user_name"]) != 0 {
+	if userDatabase.CheckUserNameExist(data["username"]) != 0 {
 		return c.Status(400).JSON(utils.RequestValueInUse("username"))
 	}
 
 	hash_password, _ := utils.HashPassword(data["password"])
 
-	save_data, save_data_err := userDatabase.CreateUser(data["email"], hash_password, data["user_name"])
+	save_data, save_data_err := userDatabase.CreateUser(data["email"], hash_password, data["username"])
 
 	if save_data_err != nil {
 		return c.Status(500).JSON(utils.ErrorMessage("Error creating user", save_data_err))
@@ -801,16 +802,16 @@ func UserNameExist(c *fiber.Ctx) error {
 		return c.Status(400).JSON(utils.InvalidRequest())
 	}
 
-	if data["user_name"] == "" {
+	if data["username"] == "" {
 		return c.Status(400).JSON(utils.RequestValueRequired("user name"))
 	}
 
-	if !utils.IsValidUsername(data["user_name"]) {
+	if !utils.IsValidUsername(data["username"]) {
 		return c.Status(400).JSON(utils.RequestValueValid("user name"))
 	}
 
 	// Check if the user name is already in the database
-	if userDatabase.CheckUserNameExist(data["user_name"]) != 0 {
+	if userDatabase.CheckUserNameExist(data["username"]) != 0 {
 		return c.Status(200).JSON(utils.RequestValueInUse("user name"))
 	}
 

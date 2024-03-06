@@ -2,8 +2,9 @@ package userSettingDatabase
 
 import (
 	"database/sql"
-	db "github.com/returnone-x/server/config"
 	"time"
+
+	db "github.com/returnone-x/server/config"
 )
 
 func UpdateUsername(id string, username string) (sql.Result, error) {
@@ -12,7 +13,7 @@ func UpdateUsername(id string, username string) (sql.Result, error) {
 	sqlString := `
 	UPDATE users 
 	SET 
-		user_name = $2,
+		username = $2,
 		update_at = $3
 	WHERE id = $1
 	RETURNING *

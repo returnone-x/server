@@ -18,7 +18,7 @@ func GetQuestionData(id string) (question_data questionModal.ReturnSourceResult,
 		q.views, 
 		q.create_at,
 		q.update_at,
-		u.user_name,
+		u.username,
 		u.avatar
 	FROM 
 		questions q
@@ -37,7 +37,7 @@ func GetQuestionData(id string) (question_data questionModal.ReturnSourceResult,
 		q.create_at,
 		q.update_at,
 		u.avatar,
-		u.user_name;
+		u.username;
 	`
 	err = db.DB.QueryRow(sqlString, id).Scan(
 		&question_data.Id,
