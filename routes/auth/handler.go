@@ -23,7 +23,7 @@ import (
 )
 
 func generateAccessTokenExp() time.Time {
-	return time.Now().UTC().Add(time.Minute * 60)
+	return time.Now().UTC().Add(time.Hour * 24 * 60)
 }
 
 func generateRefreshTokenExp() time.Time {
@@ -34,7 +34,7 @@ func SignUp(c *fiber.Ctx) error {
 	var data map[string]string
 	// get data from body
 	err := c.BodyParser(&data)
-
+ 
 	if err != nil {
 		return c.Status(400).JSON(
 			fiber.Map{

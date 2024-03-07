@@ -308,6 +308,10 @@ func GetUser(c *fiber.Ctx) error {
 		"phone_2fa":      user_data.Phone_2fa,
 		"totp_2fa":       user_data.Totp_2fa,
 		"default_2fa":    user_data.Default_2fa,
+		"bio": user_data.Bio,
+		"public_email": user_data.Public_email,
+		"pronouns": user_data.Pronouns,
+		"related_links": user_data.Related_links,
 		"create_at":      user_data.Create_at,
 		"update_at":      user_data.Update_at,
 	}
