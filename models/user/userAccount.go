@@ -42,11 +42,12 @@ type UserDetil struct {
 	Totp_2fa       bool      `json:"totp_2fa"`
 	Totp           string    `json:"totp"`
 	Default_2fa    int       `json:"default_2fa"`
-	Bio string `json:"bio"`
-	Public_email string `json:"public_email`
-	Pronouns string `json:"pronouns"`
-	Related_links []string `json:`
+	Bio            string    `json:"bio"`
+	Public_email   string    `json:"public_email"`
+	Pronouns       string    `json:"pronouns"`
+	Related_links  []string  `json:`
 	Create_at      time.Time `json:"create_at"`
 	Update_at      time.Time `json:"update_at"`
 }
+
 // table name: users
