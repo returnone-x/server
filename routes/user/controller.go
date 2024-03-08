@@ -8,8 +8,7 @@ import (
 )
 
 func Setup(app fiber.Router) {
-	app.Post("/rename", middleware.VerificationAccessToken(), Rename)
-	app.Get("/avatar", middleware.VerificationRefreshToken(), GetAvatar)
+	app.Get("/avatar/:user_id", GetAvatar)
 
 	// add group
 	question_group := app.Group("/question")

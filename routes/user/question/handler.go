@@ -28,7 +28,7 @@ func NewPost(c *fiber.Ctx) error {
 				"message": "Invalid post request",
 			})
 	}
-
+	
 	if len(data.Title) > 200 {
 		return c.Status(400).JSON(utils.RequestValueValid("question title"))
 	}

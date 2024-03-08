@@ -320,6 +320,7 @@ func GoogleCallBack(c *fiber.Ctx) error {
 		c.Cookie(&user_id_cookie)
 		c.Cookie(&refresh_token_cookie)
 		c.Cookie(&access_token_cookie)
+		userSettingDatabase.CreateUserProfile(account_result.Id)
 		return c.Status(200).Redirect(config.WebsiteUrl() + "/logincomplete")
 	}
 
