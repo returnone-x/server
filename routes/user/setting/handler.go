@@ -308,10 +308,10 @@ func GetUser(c *fiber.Ctx) error {
 		"phone_2fa":      user_data.Phone_2fa,
 		"totp_2fa":       user_data.Totp_2fa,
 		"default_2fa":    user_data.Default_2fa,
-		"bio": user_data.Bio,
-		"public_email": user_data.Public_email,
-		"pronouns": user_data.Pronouns,
-		"related_links": user_data.Related_links,
+		"bio":            user_data.Bio,
+		"public_email":   user_data.Public_email,
+		"pronouns":       user_data.Pronouns,
+		"related_links":  user_data.Related_links,
 		"create_at":      user_data.Create_at,
 		"update_at":      user_data.Update_at,
 	}
@@ -473,8 +473,14 @@ func ResetRelatedLinks(c *fiber.Ctx) error {
 		return c.Status(400).JSON(utils.RequestValueValid("related_links"))
 	}
 
-	if len(data.Related_links) > 6 {
+	if len(data.Related_links) > 5 {
 		return c.Status(400).JSON(utils.RequestValueValid("related_links"))
+	}
+
+	for _, link := range data.Related_links {
+		if len(link) > 150 {
+			return c.Status(400).JSON(utils.RequestValueValid("related_links"))
+		}
 	}
 
 	token := c.Locals("access_token_context").(*jwt.Token)
@@ -574,35 +580,20 @@ func ResetAllProfile(c *fiber.Ctx) error {
 			})
 	}
 
-	if len(data.Related_links) == 0 {
-		return c.Status(400).JSON(utils.RequestValueValid("related_links"))
-	}
-
 	if len(data.Related_links) > 6 {
 		return c.Status(400).JSON(utils.RequestValueValid("related_links"))
 	}
 
-	if len(data.Pronouns) == 0 {
-		return c.Status(400).JSON(utils.RequestValueValid("pronouns"))
-	}
 
 	if len(data.Pronouns) > 20 {
 		return c.Status(400).JSON(utils.RequestValueValid("pronouns"))
-	}
-
-	if len(data.Bio) == 0 {
-		return c.Status(400).JSON(utils.RequestValueValid("bio"))
 	}
 
 	if len(data.Bio) > 150 {
 		return c.Status(400).JSON(utils.RequestValueValid("bio"))
 	}
 
-	if len(data.Public_email) == 0 {
-		return c.Status(400).JSON(utils.RequestValueValid("public_email"))
-	}
-
-	if len(data.Public_email) > 150 || !utils.IsValidEmail(data.Public_email) {
+	if (len(data.Public_email) > 150 || !utils.IsValidEmail(data.Public_email)) && data.Public_email != "" {
 		return c.Status(400).JSON(utils.RequestValueValid("public_email"))
 	}
 

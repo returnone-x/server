@@ -4,16 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	_ "github.com/lib/pq"
+	"github.com/redis/go-redis/v9"
 	"log"
 	"os"
 	"strconv"
-	_ "github.com/lib/pq"
-	"github.com/redis/go-redis/v9"
 )
 
 var DB *sql.DB
 var Redis *redis.Client
-
 func Connect() {
 	// ** DATABASE SETTINGS & CONNECT**
 	//load environment variables
