@@ -5,6 +5,7 @@ import (
 	"github.com/returnone-x/server/routes/auth"
 	"github.com/returnone-x/server/routes/public"
 	"github.com/returnone-x/server/routes/user"
+	"github.com/returnone-x/server/routes/websocket"
 )
 
 func routes(app *fiber.App){
@@ -21,4 +22,8 @@ func routes(app *fiber.App){
 	// set user controller
 	user_group := api_v1.Group("/user")
 	user.Setup(user_group)
+
+	// set websocket controller
+	websocket_group := api_v1.Group("/ws")
+	chat.Setup(websocket_group)
 }
