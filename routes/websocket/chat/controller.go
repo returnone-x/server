@@ -7,5 +7,6 @@ import (
 )
 
 func Setup(app fiber.Router) {
+	go runHub()
 	app.Get("/questions/:questionId", middleware.VerificationAccessTokenWithoutError(), websocket.New(QuestionsChat))
 }
