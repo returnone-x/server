@@ -1,28 +1,37 @@
 package questionChat
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
+	"os"
+	"sync"
+
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/pusher/pusher-http-go/v5"
 	questionChatDatabase "github.com/returnone-x/server/database/question/chat"
 	utils "github.com/returnone-x/server/utils"
-	"log"
-	"os"
-	"sync"
 )
 
 // Add more data to this type if needed
 type client struct {
-	questionId string
+	question_id string
 	isClosing  bool
 	mu         sync.Mutex
 }
 
 type Message struct {
-	questionId string
-	message    string
+	question_id string
+	message    ReceivedMessage
+}
+
+type ReceivedMessage struct {
+	Method     string   `json:"method"`
+	Message_id string   `json:"message_id"`
+	Message    string   `json:"message"`
+	Image      []string `json:"image"`
 }
 
 var clients = make(map[*websocket.Conn]*client) // Note: although large maps with pointer-like types (e.g. strings) as keys are slow, using pointers themselves as keys is acceptable and fast
@@ -34,11 +43,11 @@ func runHub() {
 	for {
 		select {
 		case connection := <-register:
-			clients[connection] = &client{questionId: connection.Params("questionId")}
+			clients[connection] = &client{question_id: connection.Params("questionId")}
 
 		case message := <-broadcast:
 			for connection, c := range clients {
-				if c.questionId == message.questionId {
+				if c.question_id == message.question_id {
 					go func(connection *websocket.Conn, c *client) {
 						c.mu.Lock()
 						defer c.mu.Unlock()
@@ -68,7 +77,7 @@ func QuestionsChat(c *websocket.Conn) {
 		c.Close()
 	}()
 
-	questionId := c.Params("questionId")
+	question_id := c.Params("questionId")
 	var userId string
 	if c.Locals("access_token_context") != nil {
 		token := c.Locals("access_token_context").(*jwt.Token)
@@ -87,10 +96,16 @@ func QuestionsChat(c *websocket.Conn) {
 
 			return // Calls the deferred function, i.e. closes the connection on error
 		}
-		
 		if messageType == websocket.TextMessage && userId != "" {
-			// Broadcast the received message
-			broadcast <- Message{message: string(message), questionId: questionId}
+			var received_message ReceivedMessage
+
+			err := json.Unmarshal([]byte(string(message)), &received_message)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Println("ctx:", string(received_message.Method))
+
+			broadcast <- Message{message: received_message, question_id: question_id}
 		} else {
 			log.Println("websocket message received of type", messageType)
 		}
