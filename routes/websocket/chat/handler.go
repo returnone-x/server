@@ -18,25 +18,21 @@ import (
 // Add more data to this type if needed
 type client struct {
 	question_id string
-	isClosing  bool
-	mu         sync.Mutex
-}
-
-type Message struct {
-	question_id string
-	message    ReceivedMessage
+	isClosing   bool
+	mu          sync.Mutex
 }
 
 type ReceivedMessage struct {
-	Method     string   `json:"method"`
-	Message_id string   `json:"message_id"`
-	Message    string   `json:"message"`
-	Image      []string `json:"image"`
+	question_id string
+	method     string   `json:"method"`
+	message_id string   `json:"message_id"`
+	content    string   `json:"content"`
+	image      []string `json:"image"`
 }
 
 var clients = make(map[*websocket.Conn]*client) // Note: although large maps with pointer-like types (e.g. strings) as keys are slow, using pointers themselves as keys is acceptable and fast
 var register = make(chan *websocket.Conn)
-var broadcast = make(chan Message)
+var broadcast = make(chan ReceivedMessage)
 var unregister = make(chan *websocket.Conn)
 
 func runHub() {
@@ -46,6 +42,21 @@ func runHub() {
 			clients[connection] = &client{question_id: connection.Params("questionId")}
 
 		case message := <-broadcast:
+			if message.method == "new" {
+				if len(message.image) > 5 {
+					return c.Status(400).JSON(utils.RequestValueValid("image"))
+				}
+				
+				if len(message.content) > 3000 || len(data.Content) < 1 {
+					return c.Status(400).JSON(utils.RequestValueValid("content"))
+				}
+			
+				if len(data.Image) < 1 {
+					data.Image = []string{}
+				}
+			
+				result_data, err := questionChatDatabase.NewQuestionChatMessage(question_id, data.Reply, user_id, data.Content, data.Image)
+			}
 			for connection, c := range clients {
 				if c.question_id == message.question_id {
 					go func(connection *websocket.Conn, c *client) {
@@ -54,7 +65,9 @@ func runHub() {
 						if c.isClosing {
 							return
 						}
-						if err := connection.WriteMessage(websocket.TextMessage, []byte(message.message)); err != nil {
+						message_json, _ := json.Marshal(message)
+
+						if err := connection.WriteMessage(websocket.TextMessage, []byte((string(message_json)))); err != nil {
 							c.isClosing = true
 							connection.WriteMessage(websocket.CloseMessage, []byte{})
 							connection.Close()
