@@ -22,7 +22,6 @@ func NewQuestionChatMessage(question_id string, reply string, author string, con
 	_, err := db.DB.Exec(sqlString, message_id, question_id, reply, author, content, pq.Array(image), now_time, now_time)
 
 	insert_data := questionModal.QuestionChat{
-
 		Id: message_id,
 		Question_id: question_id,
 		Author:      author,
