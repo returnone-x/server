@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
 	"sync"
 
 	"github.com/gofiber/contrib/websocket"
@@ -41,9 +42,7 @@ func runHub() {
 			clients[connection] = &client{question_id: connection.Params("question_id")}
 
 		case message := <-broadcast:
-			fmt.Println(message)
 			for connection, c := range clients {
-				fmt.Println(message)
 				if c.question_id == message.Question_id {
 					go func(connection *websocket.Conn, c *client) {
 						c.mu.Lock()
@@ -76,47 +75,22 @@ func QuestionsChat(c *websocket.Conn) {
 		c.Close()
 	}()
 
-	question_id := c.Params("question_id")
-	var userId string
-	if c.Locals("access_token_context") != nil {
-		token := c.Locals("access_token_context").(*jwt.Token)
-		claims := token.Claims.(jwt.MapClaims)
-		userId = claims["user_id"].(string)
-	}
-
 	register <- c
 
 	for {
-		messageType, message, err := c.ReadMessage()
+		_, _, err := c.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Println("read error:", err)
 			}
 
-			return // Calls the deferred function, i.e. closes the connection on error
-		}
-		if messageType == websocket.TextMessage && userId != "" {
-			var received_message ReceivedMessage
-
-			err := json.Unmarshal([]byte(string(message)), &received_message)
-			if err != nil {
-				panic(err)
-			}
-
-			broadcast <- ReceivedMessage{
-				Method:     received_message.Method,
-				Message_id: received_message.Message_id,
-				Content:    received_message.Content,
-				Image:      received_message.Image, Question_id: question_id,
-			}
-		} else {
-			log.Println("websocket message received of type", messageType)
+			return
 		}
 	}
 
 }
 
-type NewMessageRequestBody struct {
+type MessageRequestBody struct {
 	Reply   string   `json:"reply"`
 	Content string   `json:"content"`
 	Image   []string `json:"image"`
@@ -130,7 +104,7 @@ func NewMessage(c *fiber.Ctx) error {
 		return c.Status(400).JSON(utils.InvalidRequest())
 	}
 	question_id := params["question_id"]
-	var data NewMessageRequestBody
+	var data MessageRequestBody
 	// get data from body
 	err := c.BodyParser(&data)
 
@@ -176,6 +150,136 @@ func NewMessage(c *fiber.Ctx) error {
 	return c.Status(200).JSON(fiber.Map{
 		"status":  "successful",
 		"message": "successful send new message",
+		"data":    result_data,
+	})
+}
+
+func DeleteMessage(c *fiber.Ctx) error {
+	params := c.AllParams()
+
+	// if user not send parms data
+	if params["question_id"] == "" {
+		return c.Status(400).JSON(utils.InvalidRequest())
+	}
+	question_id := params["question_id"]
+	message_id := params["message_id"]
+
+	token := c.Locals("access_token_context").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	// get user_id from accessToken cookie
+	user_id := claims["user_id"].(string)
+
+	result, err := questionChatDatabase.DeleteQuestionMessage(question_id, message_id, user_id)
+	effect_rows, _ := result.RowsAffected()
+
+	if effect_rows == 0 {
+		return c.Status(400).JSON(
+			fiber.Map{
+				"status":  "error",
+				"message": "Can't find this message or unauthorized",
+			})
+	}
+
+	if err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error delete data from database", err))
+	}
+
+	broadcast <- ReceivedMessage{
+		Method:      "delete",
+		Message_id:  message_id,
+		Question_id: question_id,
+	}
+
+	return c.Status(200).JSON(
+		fiber.Map{
+			"status":  "successful",
+			"message": "successful delete message",
+		})
+}
+
+func UpdateMessage(c *fiber.Ctx) error {
+	params := c.AllParams()
+
+	// if user not send parms data
+	if params["question_id"] == "" {
+		return c.Status(400).JSON(utils.InvalidRequest())
+	}
+	if params["message_id"] == "" {
+		return c.Status(400).JSON(utils.InvalidRequest())
+	}
+	question_id := params["question_id"]
+	message_id := params["message_id"]
+	var data MessageRequestBody
+	// get data from body
+	err := c.BodyParser(&data)
+
+	if err != nil {
+		return c.Status(400).JSON(
+			fiber.Map{
+				"status":  "error",
+				"message": "Invalid post request",
+			})
+	}
+
+	token := c.Locals("access_token_context").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	// get user_id from accessToken cookie
+	user_id := claims["user_id"].(string)
+
+	if len(data.Image) > 5 {
+		return c.Status(400).JSON(utils.RequestValueValid("image"))
+	}
+
+	if len(data.Content) > 3000 || len(data.Content) < 1 {
+		return c.Status(400).JSON(utils.RequestValueValid("content"))
+	}
+
+	if len(data.Image) < 1 {
+		data.Image = []string{}
+	}
+
+	result_data, err := questionChatDatabase.UpdateQuestionVote(message_id, question_id, data.Reply, user_id, data.Content, data.Image)
+	if err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error save data into database", err))
+	}
+	broadcast <- ReceivedMessage{
+		Method:      "update",
+		Message_id:  result_data.Id,
+		Content:     result_data.Content,
+		Image:       result_data.Image,
+		Reply:       result_data.Reply,
+		Question_id: question_id,
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"status":  "successful",
+		"message": "successful update message",
+		"data":    result_data,
+	})
+}
+
+func GetMessage(c *fiber.Ctx) error {
+	params := c.AllParams()
+	page := c.Query("page")
+	question_id := params["question_id"]
+
+	page_number, _ := strconv.Atoi(page)
+	if page_number <= 0 {
+		return c.Status(400).JSON(
+			fiber.Map{
+				"status":  "error",
+				"message": "Invalid get request, you only can get 200 messages in one request",
+			})
+	}
+	fmt.Println("test")
+	fmt.Println(question_id)
+	result_data, err := questionChatDatabase.GetChatQuestionhatMessage(question_id, page)
+	if err != nil {
+		return c.Status(500).JSON(utils.ErrorMessage("Error get data from database", err))
+	}
+	return c.Status(200).JSON(fiber.Map{
+		"status":  "successful",
+		"message": "successful get message",
 		"data":    result_data,
 	})
 }
